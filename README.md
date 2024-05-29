@@ -15,7 +15,7 @@ Quick Add was a Google Calendar feature that enabled creating calendar events fr
 2. Parses the input to find date info
 3. Returns a Google Calendar URL for adding the event to your calendar.
 
-Alternatively, events can be created by pressing `CMD + E` and entering the event info in the text box.
+Alternatively, events can be created by pressing `CMD + E` and entering the event info in the text box. Or, select a date and time and right click to create event.
 
 Changes that were made to Max's original Chrome Extension:
 1. `CMD + E` to trigger text entry popup (for natural language calendar event entry)
