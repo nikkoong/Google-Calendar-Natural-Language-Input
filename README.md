@@ -1,4 +1,4 @@
-# Quickest Add
+# Google Calendar Natural Language Input
 
 Quickly create Google Calendar events from natural language - forked from [https://github.com/mtimkovich/rip_quick_add](https://github.com/mtimkovich/rip_quick_add)
 
@@ -27,7 +27,11 @@ Changes that were made to Max's original Chrome Extension:
 ## Link to Chrome Web Store App
 
 #### Local
-If you want to develop locally:
+If you want to develop locally: the extension should end up in the folder `chrome-extension`, which is the output of the `yarn build` command. This rolls up (using rollup.js) the libraries we need into a single folder, with all of it getting bundled into `background.js` and `popup.js`. 
+
+A good place to start is the `manifest.json` file, which is the master file for all Google Chrome extensions. 
+
+When you're done making changes, simply zip all the files/folders in the `chrome-extension` folder into a single zip file, and that can be uploaded to the Chrome Web Store.
 
 ```
 yarn install
