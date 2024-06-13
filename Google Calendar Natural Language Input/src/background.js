@@ -21,4 +21,3 @@ chrome.contextMenus.onClicked.addListener(async (info) => {
   const lang = storage.lang
   quickAdd(info.selectionText, lang)
 });
-

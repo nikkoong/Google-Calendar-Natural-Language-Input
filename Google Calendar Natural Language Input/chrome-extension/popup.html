@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en-EN">
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #555555;
+            width: 340px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        textarea {
+            padding: 10px;
+            height: 70px;
+            border: 1px solid #868686;
+            border-radius: 4px;
+            /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); */
+            font-size: 12px;
+        }
+
+        button {
+            padding: 5px 10px;
+            border-radius: 7px;
+            background-color: #4caf4f;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: none;
+            align-items: flex-end;
+        }
+
+        button:hover {
+            background-color: #5dc961;
+        }
+
+        #error {
+            margin-top: 10px;
+            color: white;
+            font-size: 12px;
+            background-color: rgba(255, 255, 0, 0.35);
+            border-left: 5px solid yellow;
+            padding: 10px;
+            width: 100%;
+            box-sizing: border-box;
+            border-radius: 4px;
+        }
+        #error:empty {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <textarea id="input" rows="6" cols="30" placeholder="E.g. dinner friday 7pm; 'enter' to add" autofocus></textarea>
+    <br>
+    <button type="button" id="add">Add</button>
+    <div id="error"></div>
+    <script src="popup.js"></script>
+</body>
+</html>

@@ -10,8 +10,28 @@ function dateRange(start, end, isAllDay) {
   if (isAllDay) {
     formatString = 'YYYYMMDD';
   }
-
   return [start, end].map(t => t.format(formatString)).join('/');
+}
+
+function parseRecurrence(text) {
+  const recurrencePattern = /every (\d+) (\w+)/;
+  const match = text.match(recurrencePattern);
+  if (match) {
+    const interval = match[1];
+    var frequency = match[2].toUpperCase();
+    if (frequency.includes('W')) {
+      frequency = 'WEEKLY';
+    } else if (frequency.includes('M')) {
+      frequency = 'MONTHLY';
+    } else if (frequency.includes('D')) {
+      frequency = 'DAILY';
+    } else {
+      return null
+    }
+    let rrule = `RRULE:FREQ=${frequency};INTERVAL=${interval}`;
+    return {rrule, recurrenceText: match[0]};
+  }
+  return null;
 }
 
 function parse(text, lang = EN) {
@@ -28,14 +48,20 @@ function parse(text, lang = EN) {
 
   const result = results[0];
 
-  const eventTitle = text.replace(result.text, "").trim();
+  const refDate = result.refDate;
   const startDate = result.start;
-  const isAllDay = !startDate.isCertain('hour');
-  const start = dayjs(startDate.date());
+  let start = startDate? dayjs(startDate.date()) : dayjs();
+  const isAllDay = false;
   let end = null;
 
+  const recurrenceInfo = parseRecurrence(text);
+  if (recurrenceInfo) {
+    text = text.replace(recurrenceInfo.recurrenceText, "").trim();
+  }
+  const eventTitle = text.replace(result.text, "").trim();
+
   if (!start.isValid()) {
-    throw new Error('could not find time data');
+    start = dayjs();
   }
 
   if (result.end !== null) {
@@ -43,15 +69,11 @@ function parse(text, lang = EN) {
   }
 
   if (end === null) {
-    if (isAllDay) {
-      end = start.add(1, 'days');
-    } else {
-      end = start.add(1, 'hours');
-    }
+    end = start.add(1, 'hours');
   }
 
   const dates = dateRange(start, end, isAllDay);
-  return {text: eventTitle, dates}
+  return {text: eventTitle, dates, recur: recurrenceInfo? recurrenceInfo.rrule : null}
 }
 
 export function createEventUrl(text, lang) {
@@ -66,7 +88,7 @@ export function createEventUrl(text, lang) {
 
   data.action = 'TEMPLATE';
 
-  const baseUrl = 'https://www.google.com/calendar/render';
+  const baseUrl = 'https://www.google.com/calendar/event';
   const params = new URLSearchParams(data);
   return `${baseUrl}?${params}`;
 }
