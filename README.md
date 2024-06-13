@@ -8,6 +8,7 @@ Quick Add was a Google Calendar feature that enabled creating calendar events fr
 
 ### Updates 6/13
 * Added `recur` functionality using `every n days/weeks/months` to automatically create recurring events
+* Example: `Get dinner with friends Friday at 5pm every 3 weeks` or `Go the grocery story on Thursday night every 1 week` will both create recurring events. Note the need to incude the digit `1` before the time intervals in the examples above.
 * Widened scope of allowed dates to default dates without a start date to today, starting now, for 1 hour
 * Defaulted all events to 1 hour, instead of `allDay`
 
@@ -30,6 +31,7 @@ Changes that were made to Max's original Chrome Extension:
 5. Removed multiple language support and languages settings (to save space)
 
 ## Link to Chrome Web Store App
+[Chrome Extension Link](https://chromewebstore.google.com/detail/google-calendar-natural-l/dpefadnnccbgjhgnnjilfgefcoallmji)
 
 #### Local
 If you want to develop locally: the extension should end up in the folder `chrome-extension`, which is the output of the `yarn build` command. This rolls up (using rollup.js) the libraries we need into a single folder, with all of it getting bundled into `background.js` and `popup.js`. 
