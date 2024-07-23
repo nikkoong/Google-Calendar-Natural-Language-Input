@@ -2,9 +2,15 @@
 
 Quickly create Google Calendar events from natural language - forked from [https://github.com/mtimkovich/rip_quick_add](https://github.com/mtimkovich/rip_quick_add)
 
-![updated text entry](https://github.com/nikkoong/quickest-add/assets/47159312/0258b340-e199-44a8-abda-a3aef0d4693a)
+![Next UI](https://github.com/user-attachments/assets/ab1752b5-48a4-44dd-9da6-8e831d6b3520)
 
 Quick Add was a Google Calendar feature that enabled creating calendar events from natural language text input. It was removed for no reason, making many people (including myself) unhappy. This is my attempt to carry on its legacy. It uses the [Chrono](https://github.com/wanasit/chrono) library to extract time data from text.
+
+### Updates 7/23
+* Added better `recurrence` handling by allowing `everyday` and `every week` instead of requiring the interval as a number. Now can say `get dinner with Jack B thursday at 5pm every week`
+* Added yearly recurrences `every year` to handle birthdays easily. `Wish Dad happy birthday on Aug 5 every year`.
+* Added ability to add details to event using the following format: `d(<text to add in description of event>)`. This is useful for adding a link for a TODO, for adding more context to an event, etc.
+* Updated UI to make it match Google Calendar Dark Mode.
 
 ### Updates 6/13
 * Added `recur` functionality using `every n days/weeks/months` to automatically create recurring events
