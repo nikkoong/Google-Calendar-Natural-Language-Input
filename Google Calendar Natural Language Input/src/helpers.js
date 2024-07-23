@@ -48,8 +48,10 @@ function parseDetails(text) {
     details = detailsMatch[1];
     return {details, detailText: detailsMatch[0]};
   }
-  return {details, detailText: "didn't pick it up"};
+  return null;
 }
+
+
 
 function parse(text, lang = EN) {
   if (!text) {
@@ -96,7 +98,7 @@ function parse(text, lang = EN) {
   }
 
   const dates = dateRange(start, end, isAllDay);
-  return {text: eventTitle, dates, recur: recurrenceInfo? recurrenceInfo.rrule : null, details:detailInfo? detailInfo.details : null}
+  return {text: eventTitle, dates, recur: recurrenceInfo? recurrenceInfo.rrule : null, details:detailInfo? detailInfo.details : ""};
 }
 
 export function createEventUrl(text, lang) {
