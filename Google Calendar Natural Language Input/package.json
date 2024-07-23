@@ -9,7 +9,7 @@
     "watch": "rollup -c --watch -i src/background.js -o chrome-extension/background.js & rollup -c --watch -i src/popup.js -o chrome-extension/popup.js"
   },
   "type": "module",
-  "author": "Nikko Ong",
+  "author": "Nicholas Ong",
   "license": "MIT",
   "devDependencies": {
     "chrono-node": "^2.7.5",
