@@ -1,5 +1,5 @@
 {
-  "name": "rip_quick_add",
+  "name": "GCal-Natural-Lang-Input",
   "version": "1.3.0",
   "description": "Quickly create Google Calendar events from natural language.",
   "main": "index.js",

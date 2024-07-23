@@ -4,47 +4,117 @@
     <meta charset="utf-8">
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #555555;
-            width: 340px;
+            background-color: #2b2b2b; /* Dark background color */
             display: flex;
             flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            width: 420px;
+            box-sizing: border-box;
+            font-family: "Roboto", Arial, Helvetica, sans-serif;
+        }
+
+        .title {
+            font-size: 14px;
+            margin: 10px 10px  0 10px;
+            color: #9E9E9E; /*white title text*/
+            align-self: flex-start;
+            font-weight: 600;
+        }
+
+        .container {
+            background-color: #333; /* Darker background color */
+            border-radius: 0 0 8px 8px;
+            padding: 16px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: 100vw;
+            height: calc(100vh);
+            text-align: center;
+            color: #fff; /* White text color */
+            margin-top: 10px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
 
         textarea {
-            padding: 10px;
-            height: 70px;
-            border: 1px solid #868686;
+            width: 91vw;
+            padding: 5px;
+            height: 60px;
             border-radius: 4px;
-            /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); */
-            font-size: 12px;
+            border: 2px solid #007bff;
+            resize: none;
+            background-color: #1e1e1e; /* Darker input background */
+            color: #ddd; /* Light text color */
+            font-size: 14px;
+            margin: auto;
+            box-sizing: border-box;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: flex-end;
+            /* justify-content: space-between; */
+            margin-top: 10px;
         }
 
         button {
-            padding: 5px 10px;
-            border-radius: 7px;
-            background-color: #4caf4f;
+            padding: 5px;
+            border: none;
+            border-radius: 4px;
+            background-color: #007bff; /* Blue button */
             color: white;
-            font-size: 16px;
+            font-size: 14px;
             cursor: pointer;
-            box-shadow: none;
-            align-items: flex-end;
+            justify-content: flex-end;
+            font-weight: 600;
         }
 
-        button:hover {
-            background-color: #5dc961;
+        .info {
+            width: 20px;
+            margin-right: 10px;
+            border-radius: 50%;
+            border: 2px solid 007bff;
+            background: none;
+        }
+
+        .tooltip {
+            visibility: hidden;
+            width: 200px;
+            background-color: #fff;
+            color: #333;
+            text-align: center;
+            padding: 5px;
+            border-radius: 6px;
+            position: absolute;
+            top: 30px;
+            left: 30%;
+            opacity: 0;
+            transition: opacity 0.7s;
+            z-index: 1;
+        }
+
+        .tooltip-container:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        #add:hover {
+            background-color: #0056b3;
         }
 
         #error {
-            margin-top: 10px;
             color: white;
             font-size: 12px;
-            background-color: rgba(255, 255, 0, 0.35);
-            border-left: 5px solid yellow;
-            padding: 10px;
-            width: 100%;
+            background-color: rgba(233, 224, 127, 0.603);
+            border-left: 5px solid rgb(233, 224, 127);
+            padding: 7px 5px 5px 5px;
             box-sizing: border-box;
             border-radius: 4px;
+            margin-right: auto;
         }
         #error:empty {
             display: none;
@@ -52,10 +122,20 @@
     </style>
 </head>
 <body>
-    <textarea id="input" rows="6" cols="30" placeholder="E.g. dinner friday 7pm; 'enter' to add" autofocus></textarea>
-    <br>
-    <button type="button" id="add">Add</button>
-    <div id="error"></div>
-    <script src="popup.js"></script>
+    <div class="title">Google Calendar Natural Language Input (⌘+E)</div>
+    <div class="container">
+        <textarea id="input" placeholder="E.g. dinner next friday 7pm; 'enter' to add" autofocus></textarea>
+        <div class="button-container">
+            <div id="error"></div>
+            <div class="tooltip-container">
+                <button class="info">?</button>
+                <div class="tooltip">
+                    Enter an event name, when its going to happen (ex: March 21, next Sunday, tomorrow, etc.), and optionally any recurrences (ex: every week, every 3 months) or details as d(text).
+                </div>
+            </div>
+            <button type="button" id="add">Create event</button>
+        </div>
+        <script src="popup.js"></script>
+    </div>
 </body>
 </html>

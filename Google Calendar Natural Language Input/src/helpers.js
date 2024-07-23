@@ -1,8 +1,8 @@
-import {en, fr, nl, ja, ru, pt, uk, zh, de, es} from 'chrono-node';
+import {en} from 'chrono-node';
 import dayjs from 'dayjs';
 import {EN} from "./constants.js";
 
-const locales = {en, fr, nl, ja, pt, zh, de, es, ru, uk}
+const locales = {en}
 
 function dateRange(start, end, isAllDay) {
   let formatString = 'YYYYMMDD[T]HHmmss';
@@ -13,25 +13,42 @@ function dateRange(start, end, isAllDay) {
   return [start, end].map(t => t.format(formatString)).join('/');
 }
 
+//keep testing this function below (parse recurrence - make digit optional (default to 1) and add yearly reccurence)
+// add link and description updates
+
 function parseRecurrence(text) {
-  const recurrencePattern = /every (\d+) (\w+)/;
+  const recurrencePattern = /every\s*(\d+)?\s*(\w+)/;
   const match = text.match(recurrencePattern);
   if (match) {
-    const interval = match[1];
-    var frequency = match[2].toUpperCase();
-    if (frequency.includes('W')) {
+    let interval = match[1] ? match[1]: 1;
+    let frequency = match[2].toUpperCase();
+    if (frequency.includes('WEEK')) {
       frequency = 'WEEKLY';
-    } else if (frequency.includes('M')) {
+    } else if (frequency.includes('MO')) {
       frequency = 'MONTHLY';
-    } else if (frequency.includes('D')) {
+    } else if (frequency.includes('DAY')) {
       frequency = 'DAILY';
+    } else if (frequency.includes('YEAR')) {
+      frequency = 'YEARLY';
     } else {
-      return null
+      return null;
     }
     let rrule = `RRULE:FREQ=${frequency};INTERVAL=${interval}`;
     return {rrule, recurrenceText: match[0]};
   }
   return null;
+}
+
+// check for d(<text>) to extract details
+function parseDetails(text) {
+  const detailsPattern = /d\(([^)]*)\)/;
+  const detailsMatch = text.match(detailsPattern);
+  let details = null;
+  if (detailsMatch) {
+    details = detailsMatch[1];
+    return {details, detailText: detailsMatch[0]};
+  }
+  return {details, detailText: "didn't pick it up"};
 }
 
 function parse(text, lang = EN) {
@@ -58,6 +75,12 @@ function parse(text, lang = EN) {
   if (recurrenceInfo) {
     text = text.replace(recurrenceInfo.recurrenceText, "").trim();
   }
+
+  const detailInfo = parseDetails(text);
+  if (detailInfo) {
+    text = text.replace(detailInfo.detailText,"").trim();
+  }
+
   const eventTitle = text.replace(result.text, "").trim();
 
   if (!start.isValid()) {
@@ -73,7 +96,7 @@ function parse(text, lang = EN) {
   }
 
   const dates = dateRange(start, end, isAllDay);
-  return {text: eventTitle, dates, recur: recurrenceInfo? recurrenceInfo.rrule : null}
+  return {text: eventTitle, dates, recur: recurrenceInfo? recurrenceInfo.rrule : null, details:detailInfo? detailInfo.details : null}
 }
 
 export function createEventUrl(text, lang) {

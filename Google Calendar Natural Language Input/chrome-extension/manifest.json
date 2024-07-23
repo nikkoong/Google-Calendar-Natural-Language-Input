@@ -7,9 +7,6 @@
     "contextMenus",
     "storage"
   ],
-  "background": {
-    "service_worker": "background.js"
-  },
   "icons": {
     "16": "images/icon_16.png",
     "32": "images/icon_32.png",

@@ -6,7 +6,7 @@ function quickAdd(text, lang) {
   if (url) {
     chrome.tabs.create({url});
   } else {
-    document.getElementById('error').textContent = 'Could not parse time data from input';
+    document.getElementById('error').textContent = 'Please enter a valid event and date/time';
   }
 }
 
