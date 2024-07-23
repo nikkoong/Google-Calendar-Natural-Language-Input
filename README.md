@@ -11,6 +11,7 @@ Quick Add was a Google Calendar feature that enabled creating calendar events fr
 * Added yearly recurrences `every year` to handle birthdays easily. `Wish Dad happy birthday on Aug 5 every year`.
 * Added ability to add details to event using the following format: `d(<text to add in description of event>)`. This is useful for adding a link for a TODO, for adding more context to an event, etc.
 * Updated UI to make it match Google Calendar Dark Mode.
+* Removed foreign languge support (only English now) and context menu support (selecting text and right clicking on it to add it as a calendar event). Slimmed down the package significantly and made it more maintainable.
 
 ### Updates 6/13
 * Added `recur` functionality using `every n days/weeks/months` to automatically create recurring events
