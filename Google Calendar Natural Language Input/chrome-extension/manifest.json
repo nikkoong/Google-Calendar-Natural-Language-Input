@@ -1,10 +1,9 @@
 {
   "name": "Google Calendar Natural Language Input",
   "description": "Use natural language to create Google Calendar events. Updated 'Rip Quick Add' with quality of life features.",
-  "version": "1.2",
+  "version": "1.6",
   "manifest_version": 3,
   "permissions": [
-    "contextMenus",
     "storage"
   ],
   "icons": {
