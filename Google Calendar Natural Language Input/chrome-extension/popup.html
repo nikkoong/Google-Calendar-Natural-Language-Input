@@ -77,7 +77,6 @@
             width: 20px;
             margin-right: 10px;
             border-radius: 50%;
-            border: 2px solid 007bff;
             background: none;
         }
 
@@ -87,11 +86,11 @@
             background-color: #fff;
             color: #333;
             text-align: center;
-            padding: 5px;
+            padding: 2px;
             border-radius: 6px;
             position: absolute;
-            top: 30px;
-            left: 30%;
+            top: 10px;
+            left: 25%;
             opacity: 0;
             transition: opacity 0.7s;
             z-index: 1;
@@ -124,13 +123,14 @@
 <body>
     <div class="title">Google Calendar Natural Language Input (⌘+E)</div>
     <div class="container">
-        <textarea id="input" placeholder="E.g. dinner next friday 7pm; 'enter' to add" autofocus></textarea>
+        <textarea id="input" placeholder="E.g. dinner on friday 7pm; 'enter' to add" autofocus></textarea>
         <div class="button-container">
             <div id="error"></div>
             <div class="tooltip-container">
                 <button class="info">?</button>
                 <div class="tooltip">
-                    Enter an event name, when its going to happen (ex: March 21, next Sunday, tomorrow, etc.), and optionally any recurrences (ex: every week, every 3 months) or details as d(text).
+                    <p>Enter an event name and when it'll happen (ex: March 21, next Sunday, tomorrow).</p>
+                    <p>Optional: separate events with ; add recurrences (ex: every week, every 3 months, every Tues), details as d(text), location as l(text).</p>
                 </div>
             </div>
             <button type="button" id="add">Create event</button>

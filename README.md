@@ -6,6 +6,14 @@ Quickly create Google Calendar events from natural language - with inspiration f
 
 Quick Add was a Google Calendar feature that enabled creating calendar events from natural language text input. It was removed for no reason, making many people (including myself) unhappy. This is my attempt to carry on its legacy. It uses the [Chrono](https://github.com/wanasit/chrono) library to extract time data from text.
 
+### Samples of supported calendar inputs
+1. Go for a run tomorrow 3pm to 430pm
+2. Pick up groceries every Wednesday at 730pm
+3. Dad's birthday on Nov 5 every year
+4. Check with Amazon about returned item refund d(ID was 43300061-901 i think)
+5. Date night next Friday; walk dog in 30min 
+6. Check engine oil Thursday at 5pm every 6 months; check tires today every 410 days
+
 ### Updates 11/4
 * Handle multiple events. Just use the `;` to separate the different events you want to enter.
 * Handle days of the week in the past week (starting Sunday 00:00). If today was `Tuesday`, when you'd type `Get groceries on Monday at 5pm`, we'd create an event for the *past* Monday (ie `yesterday`). Now, the system recognizes any event start time that was in the last week, not including today or any date specifiers (ie November 1st), and corrects the calendar event to be the *next* Monday.
@@ -26,7 +34,7 @@ Quick Add was a Google Calendar feature that enabled creating calendar events fr
 * Defaulted all events to 1 hour, instead of `allDay`
 
 ### Next up
-* Allow event location parsing
+* Better location and detail parsing - `l()` and `d()` are not very elegant.
 
 ## How it works
 
@@ -52,10 +60,6 @@ If you want to develop locally: the extension should end up in the folder `chrom
 A good place to start is the `manifest.json` file, which is the master file for all Google Chrome extensions. 
 
 When you're done making changes, simply zip all the files/folders in the `chrome-extension` folder into a single zip file, and that can be uploaded to the Chrome Web Store.
-
-```
-yarn install
-```
 
 This app uses rollup transpiling to use the JavaScript modules pattern.
 * `yarn build`: transpile all scripts into `chrome-extension` directory
