@@ -1,8 +1,8 @@
 # Google Calendar Natural Language Input
 
-Quickly create Google Calendar events from natural language - forked from [https://github.com/mtimkovich/rip_quick_add](https://github.com/mtimkovich/rip_quick_add)
+Quickly create Google Calendar events from natural language - with inspiration from [https://github.com/mtimkovich/rip_quick_add](https://github.com/mtimkovich/rip_quick_add)
 
-![Next UI](https://github.com/user-attachments/assets/ab1752b5-48a4-44dd-9da6-8e831d6b3520)
+![UI for Natural Language Input Extension](https://github.com/user-attachments/assets/ab1752b5-48a4-44dd-9da6-8e831d6b3520)
 
 Quick Add was a Google Calendar feature that enabled creating calendar events from natural language text input. It was removed for no reason, making many people (including myself) unhappy. This is my attempt to carry on its legacy. It uses the [Chrono](https://github.com/wanasit/chrono) library to extract time data from text.
 

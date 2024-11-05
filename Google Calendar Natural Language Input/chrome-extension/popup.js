@@ -2697,9 +2697,20 @@ function parseRecurrence(text) {
   if (match) {
     let interval = match[1] ? match[1]: 1;
     let frequency = match[2].toUpperCase();
+    let daysOfWeek = [
+      "MON",
+      "TUES",
+      "WED",
+      "THUR",
+      "FRI",
+      "SAT",
+      "SUN"
+    ];
     if (frequency.includes('WEEK')) {
       frequency = 'WEEKLY';
-    } else if (frequency.includes('MO')) {
+    } else if (daysOfWeek.some(day => frequency.includes(day))) {
+      frequency = 'WEEKLY';
+    } else if (frequency.includes('MONTH')) {
       frequency = 'MONTHLY';
     } else if (frequency.includes('DAY')) {
       frequency = 'DAILY';
@@ -2726,7 +2737,17 @@ function parseDetails(text) {
   return null;
 }
 
-
+// check for loc(<text>) to extract location
+function parseLocation(text) {
+  const locationPattern = /l\(([^)]*)\)/;
+  const locationMatch = text.match(locationPattern);
+  let location = null;
+  if (locationMatch) {
+    location = locationMatch[1];
+    return {location, locationText: locationMatch[0]};
+  }
+  return null;
+}
 
 function parse(text, lang = EN) {
   if (!text) {
@@ -2748,6 +2769,12 @@ function parse(text, lang = EN) {
   const isAllDay = false;
   let end = null;
 
+  // if the parsed start date is before today, and in the last week, and has the text "day" in it, then:
+  // tldr, if the text is something on Monday, and today is tuesday, then make sure we're creating an event for the following Monday.
+  if (start.isBefore(dayjs_min(),'day') && start.isAfter(dayjs_min().subtract(1,'week')) && text.toUpperCase().includes('DAY') ) {
+    start = start.add(1,'week');
+  }
+
   const recurrenceInfo = parseRecurrence(text);
   if (recurrenceInfo) {
     text = text.replace(recurrenceInfo.recurrenceText, "").trim();
@@ -2756,6 +2783,11 @@ function parse(text, lang = EN) {
   const detailInfo = parseDetails(text);
   if (detailInfo) {
     text = text.replace(detailInfo.detailText,"").trim();
+  }
+
+  const locationInfo = parseLocation(text);
+  if (locationInfo) {
+    text = text.replace(locationInfo.locationText,"").trim();
   }
 
   const eventTitle = text.replace(result.text, "").trim();
@@ -2773,33 +2805,42 @@ function parse(text, lang = EN) {
   }
 
   const dates = dateRange(start, end, isAllDay);
-  return {text: eventTitle, dates, recur: recurrenceInfo? recurrenceInfo.rrule : null, details:detailInfo? detailInfo.details : ""};
+  return {
+    text: eventTitle,
+    dates,
+    recur: recurrenceInfo? recurrenceInfo.rrule : null,
+    details:detailInfo? detailInfo.details : "",
+    location:locationInfo? locationInfo.location : ""
+  };
 }
 
-function createEventUrl(text, lang) {
-  let data;
-  try {
-    data = parse(text, lang);
-    console.log(data);
-  } catch (err) {
-    console.log(err);
-    return null;
-  }
-
-  data.action = 'TEMPLATE';
-
-  const baseUrl = 'https://www.google.com/calendar/event';
-  const params = new URLSearchParams(data);
-  return `${baseUrl}?${params}`;
+function createEventUrls(text, lang) {
+  const events = text.split(';').map(eventText => eventText.trim()).filter(Boolean);
+  const urls = events.map(eventText => {
+    try {
+      const data = parse(eventText, lang);
+      data.action = 'TEMPLATE';
+      const baseUrl = 'https://www.google.com/calendar/event';
+      const params = new URLSearchParams(data);
+      return `${baseUrl}?${params}`;
+    } catch (err) {
+      console.log(`Error parsing event: ${err.message}`);
+      return null;
+    }
+  });
+  
+  return urls.filter(Boolean);
 }
 
 function quickAdd(text, lang) {
-  const url = createEventUrl(text, lang);
+  const urls = createEventUrls(text, lang);
 
-  if (url) {
-    chrome.tabs.create({url});
+  if (urls.length > 0) {
+    urls.forEach(url => {
+      chrome.tabs.create({ url });
+    });
   } else {
-    document.getElementById('error').textContent = 'Please enter a valid event and date/time';
+    document.getElementById('error').textContent = 'Please enter a valid event and time';
   }
 }
 

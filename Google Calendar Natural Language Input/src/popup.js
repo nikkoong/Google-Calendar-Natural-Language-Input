@@ -1,12 +1,14 @@
-import {createEventUrl} from './helpers.js'
+import {createEventUrls} from './helpers.js'
 
 function quickAdd(text, lang) {
-  const url = createEventUrl(text, lang);
+  const urls = createEventUrls(text, lang);
 
-  if (url) {
-    chrome.tabs.create({url});
+  if (urls.length > 0) {
+    urls.forEach(url => {
+      chrome.tabs.create({ url });
+    });
   } else {
-    document.getElementById('error').textContent = 'Please enter a valid event and date/time';
+    document.getElementById('error').textContent = 'Please enter a valid event and time';
   }
 }
 
