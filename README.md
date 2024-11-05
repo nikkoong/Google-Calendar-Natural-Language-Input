@@ -6,6 +6,12 @@ Quickly create Google Calendar events from natural language - with inspiration f
 
 Quick Add was a Google Calendar feature that enabled creating calendar events from natural language text input. It was removed for no reason, making many people (including myself) unhappy. This is my attempt to carry on its legacy. It uses the [Chrono](https://github.com/wanasit/chrono) library to extract time data from text.
 
+### Updates 11/4
+* Handle multiple events. Just use the `;` to separate the different events you want to enter.
+* Handle days of the week in the past week (starting Sunday 00:00). If today was `Tuesday`, when you'd type `Get groceries on Monday at 5pm`, we'd create an event for the *past* Monday (ie `yesterday`). Now, the system recognizes any event start time that was in the last week, not including today or any date specifiers (ie November 1st), and corrects the calendar event to be the *next* Monday.
+* Added support for adding locations using the `l()` specifier. Example: `Walk dog l(Fort Greene Park)`.
+* Handle special recurrence cases: `every Sunday`, `every Wednesday` now counts as a weekly recurrence. Before, it would parse this as a daily occurence due to the `day` portion of the event.
+
 ### Updates 7/23
 * Added better `recurrence` handling by allowing `everyday` and `every week` instead of requiring the interval as a number. Now can say `get dinner with Jack B thursday at 5pm every week`
 * Added yearly recurrences `every year` to handle birthdays easily. `Wish Dad happy birthday on Aug 5 every year`.
