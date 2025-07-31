@@ -1,4 +1,10 @@
 console.log('Google Calendar Natural Language Input - Content script loaded');
+console.log('Current URL:', window.location.href);
+console.log('Document ready state:', document.readyState);
+
+// Global flag to prevent multiple initializations
+let isExtensionInitialized = false;
+let initializationPromise = null;
 
 // Wait for Google Calendar to fully load
 function waitForCalendarLoad() {
@@ -10,10 +16,6 @@ function waitForCalendarLoad() {
     const checkForCreateButton = () => {
       attempts++;
       console.log(`Attempt ${attempts}: Looking for create button...`);
-      
-      // Debug: Log all potential buttons for analysis
-      const allButtons = document.querySelectorAll('button');
-      console.log(`Found ${allButtons.length} buttons on page`);
       
       // Try multiple selectors to find Google Calendar's create button
       const selectors = [
@@ -39,13 +41,14 @@ function waitForCalendarLoad() {
       for (const selector of selectors) {
         createButton = document.querySelector(selector);
         if (createButton) {
-          console.log(`Create button found with selector: ${selector}`, createButton);
+          console.log(`Create button found with selector: ${selector}`);
           break;
         }
       }
       
       // If no button found with selectors, look for buttons containing "Create" text
       if (!createButton) {
+        const allButtons = document.querySelectorAll('button');
         for (const button of allButtons) {
           const text = button.textContent?.toLowerCase() || '';
           const ariaLabel = button.getAttribute('aria-label')?.toLowerCase() || '';
@@ -61,13 +64,6 @@ function waitForCalendarLoad() {
       
       if (createButton) {
         console.log('Create button found:', createButton);
-        console.log('Button attributes:', {
-          id: createButton.id,
-          className: createButton.className,
-          ariaLabel: createButton.getAttribute('aria-label'),
-          title: createButton.getAttribute('title'),
-          textContent: createButton.textContent
-        });
         resolve(createButton);
       } else {
         console.log('Create button not found, retrying...');
@@ -91,19 +87,28 @@ function waitForCalendarLoad() {
 
 // Apply visual indicators and create Quick Add button
 function setupQuickAddButton(createButton) {
-  // Check if Quick Add button already exists
-  const existingQuickAdd = document.querySelector('.quick-add-button');
-  if (existingQuickAdd && existingQuickAdd.isConnected) {
-    console.log('Quick Add button already exists and is connected, skipping creation');
-    return existingQuickAdd;
+  // More thorough check for existing Quick Add buttons
+  const existingQuickAddButtons = document.querySelectorAll('.quick-add-button');
+  
+  // If we already have connected buttons, return the first one
+  for (const btn of existingQuickAddButtons) {
+    if (btn.isConnected) {
+      console.log('Quick Add button already exists and is connected, skipping creation');
+      return btn;
+    }
   }
   
-  // Remove any disconnected Quick Add buttons
-  document.querySelectorAll('.quick-add-button').forEach(btn => {
-    if (!btn.isConnected) {
+  // Remove ALL existing Quick Add buttons (connected or not) to prevent duplicates
+  console.log(`Removing ${existingQuickAddButtons.length} existing Quick Add buttons`);
+  existingQuickAddButtons.forEach(btn => {
+    try {
       btn.remove();
+    } catch (e) {
+      console.warn('Failed to remove existing button:', e);
     }
   });
+  
+  console.log('Creating new Quick Add button');
   
   // Create the Quick Add button
   const quickAddButton = document.createElement('button');
@@ -271,6 +276,7 @@ function createQuickEventInput() {
   container.innerHTML = `
     <div class="quick-event-header">
       <h3 class="quick-event-title">Quick Add Event</h3>
+      <span class="quick-event-shortcut">Trigger with (⌘+E)</span>
       <button class="quick-event-close" title="Close">×</button>
     </div>
     
@@ -507,6 +513,12 @@ function showHelp() {
             <li>"every Monday", "every 2 weeks"</li>
           </ul>
         </div>
+
+        <div class="quick-event-help-section">
+          <h4>Tips:</h4>
+            <ul>
+                <li>If the extension doesn't work for you, go to chrome://extensions/shortcuts to see what other extensions are using the (Command/Control+E) shortcut, and change them to something else.</li>
+            </ul>
       </div>
       
       <div class="quick-event-help-footer">
@@ -630,12 +642,19 @@ function setupMutationObserver(createButton, quickAddButton) {
     });
     
     if (needsReapply) {
-      console.log('DOM change detected, reapplying Quick Add button...');
+      console.log('DOM change detected, checking if Quick Add button needs recreation...');
       isApplyingStyle = true;
       setTimeout(() => {
-        if (createButton && createButton.isConnected) {
-          setupQuickAddButton(createButton);
-        } else {
+        // Only recreate if extension is still initialized and button doesn't exist
+        if (isExtensionInitialized && createButton && createButton.isConnected) {
+          const existingButton = document.querySelector('.quick-add-button');
+          if (!existingButton || !existingButton.isConnected) {
+            console.log('Recreating Quick Add button due to DOM change');
+            setupQuickAddButton(createButton);
+          } else {
+            console.log('Quick Add button still exists, skipping recreation');
+          }
+        } else if (isExtensionInitialized) {
           console.log('Create button no longer connected, reinitializing...');
           reinitialize();
         }
@@ -659,6 +678,12 @@ function setupMutationObserver(createButton, quickAddButton) {
 
 // Reinitialize if button gets replaced
 async function reinitialize() {
+  // Don't reinitialize if extension is not supposed to be initialized
+  if (!isExtensionInitialized) {
+    console.log('Extension not initialized, skipping reinitialize');
+    return;
+  }
+  
   try {
     console.log('Reinitializing extension...');
     const newCreateButton = await waitForCalendarLoad();
@@ -672,310 +697,101 @@ async function reinitialize() {
   }
 }
 
-// Start initialization when DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
-} else {
-  init();
-}
 
-// Handle create button click
-function handleCreateButtonClick(event) {
-  console.log('Create button clicked, monitoring for dropdown...');
-  
-  // Small delay to allow dropdown to appear
-  setTimeout(() => {
-    const dropdown = findDropdownInDocument();
-    if (dropdown) {
-      console.log('Found dropdown after button click');
-      injectQuickEventOption(dropdown);
-    }
-  }, 100);
-}
-
-// Find dropdown container in the document
-function findDropdownInDocument() {
-  // Try multiple selectors for Google Calendar dropdown
-  const selectors = [
-    '[role="menu"]',
-    '[role="listbox"]',
-    '.gb_Da', // Common Google dropdown class
-    '.VfPpkd-xl07Ob', // Material Design menu class
-    '[data-menu-container]',
-    '[aria-label*="menu"]',
-    '.gb_ca', // Google apps menu
-    '.gb_Kc' // Another Google menu class
-  ];
-  
-  for (const selector of selectors) {
-    const dropdown = document.querySelector(selector);
-    if (dropdown && isVisibleDropdown(dropdown)) {
-      console.log(`Found dropdown with selector: ${selector}`);
-      return dropdown;
-    }
-  }
-  
-  // Fallback: look for recently added visible elements that might be dropdowns
-  const recentElements = document.querySelectorAll('[style*="position"], [class*="menu"], [class*="dropdown"]');
-  for (const element of recentElements) {
-    if (isVisibleDropdown(element) && hasDropdownContent(element)) {
-      console.log('Found dropdown via fallback detection');
-      return element;
-    }
-  }
-  
-  return null;
-}
-
-// Find dropdown container in a specific node
-function findDropdownContainer(node) {
-  if (isVisibleDropdown(node) && hasDropdownContent(node)) {
-    return node;
-  }
-  
-  // Check child elements
-  const menuElements = node.querySelectorAll('[role="menu"], [role="listbox"], .gb_Da, .VfPpkd-xl07Ob');
-  for (const menu of menuElements) {
-    if (isVisibleDropdown(menu)) {
-      return menu;
-    }
-  }
-  
-  return null;
-}
-
-// Check if element is a visible dropdown
-function isVisibleDropdown(element) {
-  if (!element || !element.getBoundingClientRect) return false;
-  
-  const rect = element.getBoundingClientRect();
-  const style = window.getComputedStyle(element);
-  
-  return (
-    rect.width > 0 && 
-    rect.height > 0 && 
-    style.display !== 'none' && 
-    style.visibility !== 'hidden' &&
-    style.opacity !== '0'
-  );
-}
-
-// Check if element has dropdown-like content
-function hasDropdownContent(element) {
-  // Look for typical dropdown content patterns
-  const hasMenuItems = element.querySelector('[role="menuitem"], [role="option"], button, a');
-  const hasText = element.textContent && element.textContent.trim().length > 0;
-  const hasDropdownClasses = element.className && (
-    element.className.includes('menu') ||
-    element.className.includes('dropdown') ||
-    element.className.includes('gb_') // Google classes
-  );
-  
-  return hasMenuItems || (hasText && hasDropdownClasses);
-}
-
-// Inject Quick Event option into dropdown
-function injectQuickEventOption(dropdown) {
-  // Prevent multiple injections
-  if (dropdown.querySelector('.quick-event-menu-item')) {
-    console.log('Quick Event option already exists in dropdown');
-    return;
-  }
-  
-  console.log('Injecting Quick Event option into dropdown');
-  
-  // Find existing menu items to copy styling
-  const existingItems = dropdown.querySelectorAll('[role="menuitem"], [role="option"], button, a');
-  let templateItem = null;
-  
-  for (const item of existingItems) {
-    const text = item.textContent?.toLowerCase() || '';
-    if (text.includes('event') || text.includes('create') || text.includes('task')) {
-      templateItem = item;
-      break;
-    }
-  }
-  
-  // If no template found, use the first menu item
-  if (!templateItem && existingItems.length > 0) {
-    templateItem = existingItems[0];
-  }
-  
-  if (!templateItem) {
-    console.log('No template item found, creating Quick Event with basic styling');
-    createBasicQuickEventItem(dropdown);
-    return;
-  }
-  
-  // Clone the template item
-  const quickEventItem = templateItem.cloneNode(true);
-  quickEventItem.className = templateItem.className + ' quick-event-menu-item';
-  quickEventItem.setAttribute('data-quick-event-item', 'true');
-  
-  // Update the content
-  updateQuickEventItemContent(quickEventItem);
-  
-  // Add click handler
-  quickEventItem.addEventListener('click', handleQuickEventClick);
-  
-  // Insert at the top of the dropdown
-  if (dropdown.firstChild) {
-    dropdown.insertBefore(quickEventItem, dropdown.firstChild);
-  } else {
-    dropdown.appendChild(quickEventItem);
-  }
-  
-  console.log('Quick Event option injected successfully');
-}
-
-// Update Quick Event item content
-function updateQuickEventItemContent(item) {
-  // Find text content and update it
-  const textElements = item.querySelectorAll('*');
-  let updated = false;
-  
-  for (const element of textElements) {
-    if (element.children.length === 0 && element.textContent?.trim()) {
-      element.textContent = 'Quick Event';
-      updated = true;
-      break;
-    }
-  }
-  
-  if (!updated) {
-    item.textContent = 'Quick Event';
-  }
-  
-  // Find and update icon if present
-  const iconElements = item.querySelectorAll('svg, img, [class*="icon"]');
-  if (iconElements.length > 0) {
-    const icon = iconElements[0];
-    if (icon.tagName === 'svg') {
-      // Replace with lightning bolt SVG
-      icon.innerHTML = `
-        <path d="M7 2v11h3v9l7-12h-4l4-8z" fill="currentColor"/>
-      `;
-      icon.setAttribute('viewBox', '0 0 24 24');
-    }
-  }
-}
-
-// Create basic Quick Event item if no template available
-function createBasicQuickEventItem(dropdown) {
-  const quickEventItem = document.createElement('div');
-  quickEventItem.className = 'quick-event-menu-item';
-  quickEventItem.setAttribute('data-quick-event-item', 'true');
-  quickEventItem.setAttribute('role', 'menuitem');
-  quickEventItem.style.cssText = `
-    display: flex !important;
-    align-items: center !important;
-    padding: 8px 16px !important;
-    cursor: pointer !important;
-    font-size: 14px !important;
-    color: #3c4043 !important;
-    font-family: 'Google Sans', Roboto, Arial, sans-serif !important;
-    border-radius: 4px !important;
-    margin: 2px !important;
-    transition: background-color 0.1s ease !important;
-  `;
-  
-  // Add hover effect
-  quickEventItem.addEventListener('mouseenter', () => {
-    quickEventItem.style.backgroundColor = '#f8f9fa';
-  });
-  
-  quickEventItem.addEventListener('mouseleave', () => {
-    quickEventItem.style.backgroundColor = 'transparent';
-  });
-  
-  // Add content
-  quickEventItem.innerHTML = `
-    <span style="margin-right: 12px; font-size: 16px;">⚡</span>
-    <span>Quick Event</span>
-  `;
-  
-  // Add click handler
-  quickEventItem.addEventListener('click', handleQuickEventClick);
-  
-  // Insert at the top
-  if (dropdown.firstChild) {
-    dropdown.insertBefore(quickEventItem, dropdown.firstChild);
-  } else {
-    dropdown.appendChild(quickEventItem);
-  }
-}
-
-// Handle Quick Event click
-function handleQuickEventClick(event) {
-  event.preventDefault();
-  event.stopPropagation();
-  
-  console.log('Quick Event clicked!');
-  
-  // Close the dropdown
-  const dropdown = event.target.closest('[role="menu"], [role="listbox"], .gb_Da, .VfPpkd-xl07Ob');
-  if (dropdown) {
-    dropdown.style.display = 'none';
-  }
-  
-  // TODO: Show inline text input (Task 4)
-  alert('Quick Event clicked! (Text input will be implemented in Task 4)');
-}
 // Initialize the extension
 async function init() {
-  try {
-    console.log('Initializing Google Calendar Natural Language Input...');
-    const createButton = await waitForCalendarLoad();
-    console.log('Google Calendar loaded successfully, create button found');
-    
-    // Create the Quick Add button next to the create button
-    const quickAddButton = setupQuickAddButton(createButton);
-    
-    if (!quickAddButton) {
-      console.error('Failed to create Quick Add button');
-      return;
-    }
-    
-    // Set up mutation observer to maintain Quick Add button
-    const observer = setupMutationObserver(createButton, quickAddButton);
-    
-    // Aggressively maintain Quick Add button
-    let currentCreateButton = createButton;
-    let currentQuickAddButton = quickAddButton;
-    
-    const maintainButton = () => {
-      // Check if create button still exists
-      if (!currentCreateButton || !currentCreateButton.isConnected) {
-        console.log('Create button lost, searching for new one...');
-        waitForCalendarLoad().then((newButton) => {
-          if (newButton && newButton !== currentCreateButton) {
-            console.log('Found new create button');
-            currentCreateButton = newButton;
-            currentQuickAddButton = setupQuickAddButton(currentCreateButton);
-            setupMutationObserver(currentCreateButton, currentQuickAddButton);
-          }
-        }).catch(() => {
-          console.log('Could not find create button');
-        });
+  // Prevent multiple initializations
+  if (isExtensionInitialized) {
+    console.log('Extension already initialized, skipping');
+    return;
+  }
+  
+  // If there's already an initialization in progress, wait for it
+  if (initializationPromise) {
+    console.log('Initialization already in progress, waiting...');
+    return initializationPromise;
+  }
+  
+  // Mark as initializing and create promise
+  initializationPromise = (async () => {
+    try {
+      console.log('Initializing Google Calendar Natural Language Input...');
+      
+      // Clean up any existing Quick Add buttons first
+      const existingButtons = document.querySelectorAll('.quick-add-button');
+      console.log(`Cleaning up ${existingButtons.length} existing Quick Add buttons`);
+      existingButtons.forEach(btn => {
+        try {
+          btn.remove();
+        } catch (e) {
+          console.warn('Failed to remove existing button:', e);
+        }
+      });
+      
+      const createButton = await waitForCalendarLoad();
+      console.log('Google Calendar loaded successfully, create button found');
+      
+      // Create the Quick Add button next to the create button
+      const quickAddButton = setupQuickAddButton(createButton);
+      
+      if (!quickAddButton) {
+        console.error('Failed to create Quick Add button');
         return;
       }
       
-      // Check if Quick Add button still exists and is connected
-      const existingQuickAdd = document.querySelector('.quick-add-button');
-      if (!existingQuickAdd || !existingQuickAdd.isConnected) {
-        console.log('Quick Add button missing, recreating...');
-        currentQuickAddButton = setupQuickAddButton(currentCreateButton);
-      }
-    };
-    
-    // Check every 2 seconds
-    setInterval(maintainButton, 2000);
-    
-    console.log('Extension initialized successfully with Quick Add button');
-    
-  } catch (error) {
-    console.error('Failed to initialize extension:', error);
-  }
+      // Set up mutation observer to maintain Quick Add button
+      const observer = setupMutationObserver(createButton, quickAddButton);
+      
+      // Aggressively maintain Quick Add button
+      let currentCreateButton = createButton;
+      let currentQuickAddButton = quickAddButton;
+      
+      const maintainButton = () => {
+        // Skip maintenance if we're no longer initialized
+        if (!isExtensionInitialized) {
+          return;
+        }
+        
+        // Check if create button still exists
+        if (!currentCreateButton || !currentCreateButton.isConnected) {
+          console.log('Create button lost, searching for new one...');
+          waitForCalendarLoad().then((newButton) => {
+            if (newButton && newButton !== currentCreateButton && isExtensionInitialized) {
+              console.log('Found new create button');
+              currentCreateButton = newButton;
+              currentQuickAddButton = setupQuickAddButton(currentCreateButton);
+              setupMutationObserver(currentCreateButton, currentQuickAddButton);
+            }
+          }).catch(() => {
+            console.log('Could not find create button');
+          });
+          return;
+        }
+        
+        // Check if Quick Add button still exists and is connected
+        const existingQuickAdd = document.querySelector('.quick-add-button');
+        if (!existingQuickAdd || !existingQuickAdd.isConnected) {
+          console.log('Quick Add button missing, recreating...');
+          currentQuickAddButton = setupQuickAddButton(currentCreateButton);
+        }
+      };
+      
+      // Check every 2 seconds
+      setInterval(maintainButton, 2000);
+      
+      // Mark as successfully initialized
+      isExtensionInitialized = true;
+      console.log('Extension initialized successfully with Quick Add button');
+      
+    } catch (error) {
+      console.error('Failed to initialize extension:', error);
+    } finally {
+      // Clear the initialization promise
+      initializationPromise = null;
+    }
+  })();
+  
+  return initializationPromise;
 }
 
 // Start initialization when DOM is ready
@@ -984,3 +800,26 @@ if (document.readyState === 'loading') {
 } else {
   init();
 }
+
+// Clean up on page unload to prevent memory leaks
+window.addEventListener('beforeunload', () => {
+  isExtensionInitialized = false;
+  initializationPromise = null;
+  console.log('Extension cleanup on page unload');
+});
+
+// Handle single-page app navigation (like Google Calendar)
+let currentUrl = window.location.href;
+const urlCheckInterval = setInterval(() => {
+  if (window.location.href !== currentUrl) {
+    console.log('URL changed, reinitializing extension');
+    currentUrl = window.location.href;
+    isExtensionInitialized = false;
+    initializationPromise = null;
+    
+    // Small delay to let the new page load
+    setTimeout(() => {
+      init();
+    }, 1000);
+  }
+}, 1000);

@@ -120,7 +120,7 @@
 .quick-event-help {
   font-size: 12px;
   color: #5f6368;
-  margin-top: 8px;
+  margin-top: 6px;
   line-height: 1.4;
 }
 
@@ -128,7 +128,7 @@
 .quick-event-actions {
   display: flex;
   gap: 8px;
-  margin-top: 12px;
+  margin-top: 8px;
   justify-content: flex-end;
 }
 

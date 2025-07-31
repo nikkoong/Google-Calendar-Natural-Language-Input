@@ -2963,7 +2963,11 @@ Time Formats:
 
 Recurrence Patterns:
 • "every day", "every week", "every month"
-• "every Monday", "every 2 weeks"`);
+• "every Monday", "every 2 weeks"
+
+Tips:
+• If the extension doesn't work for you, go to chrome://extensions/shortcuts to see what other extensions are using the (Command/Control+E) shortcut, and change them to something else.
+`);
 }
 
 // Auto-focus input when popup opens
