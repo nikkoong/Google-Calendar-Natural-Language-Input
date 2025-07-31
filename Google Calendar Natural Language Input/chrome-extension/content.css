@@ -1,0 +1,381 @@
+/* Google Calendar Natural Language Input - Content Script Styles */
+
+.quick-event-extension {
+  font-family: 'Google Sans', Roboto, Arial, sans-serif;
+}
+
+/* Quick Add button styles - Fallback only (most styles are applied inline) */
+.quick-add-button {
+  font-family: 'Google Sans', Roboto, Arial, sans-serif !important;
+  user-select: none !important;
+  white-space: nowrap !important;
+  margin-top: 8px !important; /* Ensure consistent gap between create and quick add buttons */
+}
+
+.quick-add-button:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(66,133,244,.3) !important;
+}
+
+/* Ensure button container has proper layout */
+.quick-add-button[data-quick-add-active="true"] {
+  flex-shrink: 0 !important;
+}
+
+/* Quick Event Input Container */
+.quick-event-input-container {
+  position: absolute;
+  background: white;
+  border: 1px solid #dadce0;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(32,33,36,.28);
+  padding: 10px;
+  min-width: 320px;
+  max-width: 400px;
+  z-index: 1001;
+  font-family: 'Google Sans', Roboto, Arial, sans-serif;
+  display: none;
+  top: 100%;
+  left: 0;
+  margin-top: 5px;
+}
+
+.quick-event-input-container.show {
+  display: block;
+  animation: quickEventFadeIn 0.2s ease-out;
+}
+
+@keyframes quickEventFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Input field styling */
+.quick-event-input {
+  width: 100%;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-family: 'Google Sans', Roboto, Arial, sans-serif;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+  background: white;
+  color: black;
+}
+
+.quick-event-input:focus {
+  border-color: #4285f4;
+  box-shadow: 0 0 0 1px #4285f4;
+}
+
+.quick-event-input::placeholder {
+  color: #5f6368;
+  font-style: normal;
+}
+
+/* Input container header */
+.quick-event-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.quick-event-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: #3c4043;
+  margin: 0;
+}
+
+.quick-event-close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #5f6368;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  transition: background-color 0.2s ease;
+}
+
+.quick-event-close:hover {
+  background-color: #f8f9fa;
+}
+
+/* Help text */
+.quick-event-help {
+  font-size: 12px;
+  color: #5f6368;
+  margin-top: 8px;
+  line-height: 1.4;
+}
+
+/* Action buttons container */
+.quick-event-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  justify-content: flex-end;
+}
+
+.quick-event-btn {
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  font-family: 'Google Sans', Roboto, Arial, sans-serif;
+}
+
+.quick-event-btn-primary {
+  background: #4285f4;
+  color: white;
+}
+
+.quick-event-btn-primary:hover {
+  background: #3367d6;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.quick-event-btn-primary:disabled {
+  background: #dadce0;
+  color: #5f6368;
+  cursor: not-allowed;
+}
+
+.quick-event-btn-secondary {
+  background: transparent;
+  color: #5f6368;
+  border: 1px solid #dadce0;
+}
+
+.quick-event-btn-secondary:hover {
+  background: #f8f9fa;
+}
+
+/* Loading state */
+.quick-event-loading {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  color: #5f6368;
+  font-size: 14px;
+}
+
+.quick-event-loading.show {
+  display: flex;
+}
+
+.quick-event-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #dadce0;
+  border-top: 2px solid #4285f4;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .quick-event-input-container {
+    min-width: 280px;
+    max-width: 320px;
+    padding: 12px;
+  }
+  
+  .quick-event-input {
+    padding: 10px 12px;
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+  
+  .quick-event-actions {
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+  
+  .quick-event-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Help Modal Styles */
+.quick-event-help-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  font-family: 'Google Sans', Roboto, Arial, sans-serif;
+}
+
+.quick-event-help-modal.show {
+  opacity: 1;
+}
+
+.quick-event-help-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+}
+
+.quick-event-help-content {
+  position: relative;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 8px 30px rgba(32,33,36,.28);
+  max-width: 500px;
+  max-height: 80vh;
+  width: 90%;
+  overflow: hidden;
+  transform: scale(0.9);
+  transition: transform 0.2s ease;
+}
+
+.quick-event-help-modal.show .quick-event-help-content {
+  transform: scale(1);
+}
+
+.quick-event-help-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #dadce0;
+  background: #f8f9fa;
+}
+
+.quick-event-help-title {
+  font-size: 18px;
+  font-weight: 500;
+  color: #3c4043;
+  margin: 0;
+}
+
+.quick-event-help-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #5f6368;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  transition: background-color 0.2s ease;
+}
+
+.quick-event-help-close:hover {
+  background-color: #e8eaed;
+}
+
+.quick-event-help-body {
+  padding: 20px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.quick-event-help-section {
+  margin-bottom: 20px;
+}
+
+.quick-event-help-section:last-child {
+  margin-bottom: 0;
+}
+
+.quick-event-help-section h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #3c4043;
+  margin: 0 0 8px 0;
+}
+
+.quick-event-help-section ul {
+  margin: 0;
+  padding-left: 16px;
+  list-style-type: disc;
+}
+
+.quick-event-help-section li {
+  font-size: 13px;
+  color: #5f6368;
+  line-height: 1.5;
+  margin-bottom: 4px;
+}
+
+.quick-event-help-section li:last-child {
+  margin-bottom: 0;
+}
+
+.quick-event-help-section li strong {
+  color: #3c4043;
+  font-weight: 500;
+}
+
+.quick-event-help-footer {
+  padding: 16px 20px;
+  border-top: 1px solid #dadce0;
+  background: #f8f9fa;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.quick-event-help-got-it {
+  padding: 8px 24px;
+}
+
+/* Help Modal Responsive */
+@media (max-width: 768px) {
+  .quick-event-help-content {
+    width: 95%;
+    max-height: 90vh;
+  }
+  
+  .quick-event-help-header,
+  .quick-event-help-footer {
+    padding: 12px 16px;
+  }
+  
+  .quick-event-help-body {
+    padding: 16px;
+    max-height: 70vh;
+  }
+  
+  .quick-event-help-title {
+    font-size: 16px;
+  }
+}

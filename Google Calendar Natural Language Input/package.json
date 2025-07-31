@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "rollup -c -i src/popup.js -o chrome-extension/popup.js",
+    "build": "rollup -c -i src/popup.js -o chrome-extension/popup.js && rollup -c -i src/content-helpers.js -o chrome-extension/content-helpers.js",
     "watch": "rollup -c --watch -i src/popup.js -o chrome-extension/popup.js"
   },
   "type": "module",

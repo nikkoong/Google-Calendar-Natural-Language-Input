@@ -4,138 +4,204 @@
     <meta charset="utf-8">
     <style>
         body {
-            background-color: #2b2b2b; /* Dark background color */
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            align-items: center;
-            height: 100vh;
+            width: 380px;
+            height: 280px;
             margin: 0;
-            width: 420px;
+            padding: 0;
+            font-family: 'Google Sans', Roboto, Arial, sans-serif;
+            background: white;
             box-sizing: border-box;
-            font-family: "Roboto", Arial, Helvetica, sans-serif;
         }
 
-        .title {
-            font-size: 14px;
-            margin: 10px 10px  0 10px;
-            color: #9E9E9E; /*white title text*/
-            align-self: flex-start;
-            font-weight: 600;
-        }
-
-        .container {
-            background-color: #333; /* Darker background color */
-            border-radius: 0 0 8px 8px;
+        .quick-event-popup-container {
             padding: 16px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            width: 100vw;
-            height: calc(100vh);
-            text-align: center;
-            color: #fff; /* White text color */
-            margin-top: 10px;
+            height: 100%;
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
         }
 
-        textarea {
-            width: 91vw;
-            padding: 5px;
-            height: 60px;
-            border-radius: 4px;
-            border: 2px solid #007bff;
-            resize: none;
-            background-color: #1e1e1e; /* Darker input background */
-            color: #ddd; /* Light text color */
-            font-size: 14px;
-            margin: auto;
-            box-sizing: border-box;
-        }
-
-        .button-container {
+        /* Reuse the same styles from content.css */
+        .quick-event-header {
             display: flex;
-            justify-content: flex-end;
-            /* justify-content: space-between; */
-            margin-top: 10px;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
         }
 
-        button {
-            padding: 5px;
-            border: none;
-            border-radius: 4px;
-            background-color: #007bff; /* Blue button */
-            color: white;
-            font-size: 14px;
-            cursor: pointer;
-            justify-content: flex-end;
-            font-weight: 600;
+        .quick-event-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #3c4043;
+            margin: 0;
         }
 
-        .info {
-            width: 20px;
-            margin-right: 10px;
-            border-radius: 50%;
-            background: none;
-        }
-
-        .tooltip {
-            visibility: hidden;
-            width: 200px;
-            background-color: #fff;
-            color: #333;
-            text-align: center;
-            padding: 2px;
-            border-radius: 6px;
-            position: absolute;
-            top: 10px;
-            left: 25%;
-            opacity: 0;
-            transition: opacity 0.7s;
-            z-index: 1;
-        }
-
-        .tooltip-container:hover .tooltip {
-            visibility: visible;
-            opacity: 1;
-        }
-
-        #add:hover {
-            background-color: #0056b3;
-        }
-
-        #error {
-            color: white;
+        .quick-event-subtitle {
             font-size: 12px;
-            background-color: rgba(233, 224, 127, 0.603);
-            border-left: 5px solid rgb(233, 224, 127);
-            padding: 7px 5px 5px 5px;
-            box-sizing: border-box;
-            border-radius: 4px;
-            margin-right: auto;
+            color: #5f6368;
+            margin: 0;
+            margin-top: 2px;
         }
-        #error:empty {
+
+        .quick-event-input {
+            width: 100%;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            padding: 12px 16px;
+            font-size: 14px;
+            font-family: 'Google Sans', Roboto, Arial, sans-serif;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            box-sizing: border-box;
+            background: white;
+            resize: none;
+            min-height: 80px;
+        }
+
+        .quick-event-input:focus {
+            border-color: #4285f4;
+            box-shadow: 0 0 0 1px #4285f4;
+        }
+
+        .quick-event-input::placeholder {
+            color: #5f6368;
+            font-style: normal;
+        }
+
+        .quick-event-help {
+            font-size: 12px;
+            color: #5f6368;
+            margin-top: 8px;
+            line-height: 1.4;
+            flex-grow: 1;
+        }
+
+        .quick-event-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            justify-content: flex-end;
+        }
+
+        .quick-event-btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+            font-family: 'Google Sans', Roboto, Arial, sans-serif;
+        }
+
+        .quick-event-btn-primary {
+            background: #4285f4;
+            color: white;
+        }
+
+        .quick-event-btn-primary:hover {
+            background: #3367d6;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .quick-event-btn-primary:disabled {
+            background: #dadce0;
+            color: #5f6368;
+            cursor: not-allowed;
+        }
+
+        .quick-event-btn-secondary {
+            background: transparent;
+            color: #5f6368;
+            border: 1px solid #dadce0;
+        }
+
+        .quick-event-btn-secondary:hover {
+            background: #f8f9fa;
+        }
+
+        .quick-event-loading {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            color: #5f6368;
+            font-size: 14px;
+            margin-top: 12px;
+        }
+
+        .quick-event-loading.show {
+            display: flex;
+        }
+
+        .quick-event-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #dadce0;
+            border-top: 2px solid #4285f4;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            color: #d93025;
+            font-size: 12px;
+            margin-top: 8px;
+            padding: 8px 12px;
+            background: #fce8e6;
+            border-radius: 4px;
+            border-left: 4px solid #d93025;
             display: none;
         }
+
+        .error-message.show {
+            display: block;
+        }
+    </style>
     </style>
 </head>
 <body>
-    <div class="title">Google Calendar Natural Language Input (⌘+E)</div>
-    <div class="container">
-        <textarea id="input" placeholder="E.g. dinner on friday 7pm; 'enter' to add" autofocus></textarea>
-        <div class="button-container">
-            <div id="error"></div>
-            <div class="tooltip-container">
-                <button class="info">?</button>
-                <div class="tooltip">
-                    <p>Enter an event name and when it'll happen (ex: March 21, next Sunday, tomorrow).</p>
-                    <p>Optional: separate events with ; add recurrences (ex: every week, every 3 months, every Tues), details as d(text), location as l(text).</p>
-                </div>
+    <div class="quick-event-popup-container">
+        <div class="quick-event-header">
+            <div>
+                <h3 class="quick-event-title">Quick Add Event</h3>
+                <p class="quick-event-subtitle">Google Calendar Natural Language Input (⌘+E)</p>
             </div>
-            <button type="button" id="add">Create event</button>
         </div>
-        <script src="popup.js"></script>
+        
+        <textarea 
+            id="quick-event-input"
+            class="quick-event-input" 
+            placeholder="Lunch next Tuesday at 1"
+            aria-label="Enter event details in natural language"
+            autofocus
+        ></textarea>
+        
+        <div class="quick-event-help">
+            d(description) - l(location) - multiple events (;) - recurrences "every N days/weeks/etc"
+        </div>
+
+        <div class="error-message" id="error-message"></div>
+        
+        <div class="quick-event-loading" id="loading">
+            <div class="quick-event-spinner"></div>
+            <span>Creating events...</span>
+        </div>
+        
+        <div class="quick-event-actions">
+            <button class="quick-event-btn quick-event-btn-secondary" id="quick-event-help">
+                Help
+            </button>
+            <button class="quick-event-btn quick-event-btn-primary" id="quick-event-create" disabled>
+                Create Event(s)
+            </button>
+        </div>
     </div>
+
+    <script src="popup.js"></script>
 </body>
 </html>

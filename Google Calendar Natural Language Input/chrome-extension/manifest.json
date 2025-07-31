@@ -4,7 +4,11 @@
   "version": "1.8",
   "manifest_version": 3,
   "permissions": [
-    "storage"
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://calendar.google.com/*"
   ],
   "icons": {
     "16": "images/icon_16.png",
@@ -27,5 +31,19 @@
     },
     "default_title": "Add GCal Event",
     "default_popup": "popup.html"
-  }
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://calendar.google.com/*"],
+      "js": ["content-helpers.js", "content.js"],
+      "css": ["content.css"],
+      "run_at": "document_end"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["*.js", "*.css", "*.html"],
+      "matches": ["https://calendar.google.com/*"]
+    }
+  ]
 }
