@@ -1,7 +1,3 @@
-console.log('Google Calendar Natural Language Input - Content script loaded');
-console.log('Current URL:', window.location.href);
-console.log('Document ready state:', document.readyState);
-
 // Global flag to prevent multiple initializations
 let isExtensionInitialized = false;
 let initializationPromise = null;
@@ -15,7 +11,6 @@ function waitForCalendarLoad() {
     // Check if we're on the calendar page and if the create button exists
     const checkForCreateButton = () => {
       attempts++;
-      console.log(`Attempt ${attempts}: Looking for create button...`);
       
       // Try multiple selectors to find Google Calendar's create button
       const selectors = [
@@ -41,7 +36,6 @@ function waitForCalendarLoad() {
       for (const selector of selectors) {
         createButton = document.querySelector(selector);
         if (createButton) {
-          console.log(`Create button found with selector: ${selector}`);
           break;
         }
       }
@@ -55,7 +49,6 @@ function waitForCalendarLoad() {
           const title = button.getAttribute('title')?.toLowerCase() || '';
           
           if (text.includes('create') || ariaLabel.includes('create') || title.includes('create')) {
-            console.log('Found potential create button by text/aria:', button);
             createButton = button;
             break;
           }
@@ -63,17 +56,10 @@ function waitForCalendarLoad() {
       }
       
       if (createButton) {
-        console.log('Create button found:', createButton);
         resolve(createButton);
       } else {
-        console.log('Create button not found, retrying...');
         
         if (attempts >= maxAttempts) {
-          console.error('Max attempts reached. Could not find create button.');
-          // Log page info for debugging
-          console.log('Current URL:', window.location.href);
-          console.log('Page title:', document.title);
-          console.log('Is calendar page?', window.location.href.includes('calendar.google.com'));
           reject(new Error('Create button not found after maximum attempts'));
         } else {
           setTimeout(checkForCreateButton, 1000);
@@ -87,28 +73,28 @@ function waitForCalendarLoad() {
 
 // Apply visual indicators and create Quick Add button
 function setupQuickAddButton(createButton) {
-  // More thorough check for existing Quick Add buttons
-  const existingQuickAddButtons = document.querySelectorAll('.quick-add-button');
   
-  // If we already have connected buttons, return the first one
-  for (const btn of existingQuickAddButtons) {
-    if (btn.isConnected) {
-      console.log('Quick Add button already exists and is connected, skipping creation');
-      return btn;
-    }
-  }
-  
-  // Remove ALL existing Quick Add buttons (connected or not) to prevent duplicates
-  console.log(`Removing ${existingQuickAddButtons.length} existing Quick Add buttons`);
-  existingQuickAddButtons.forEach(btn => {
+  // Always remove ALL existing Quick Add buttons first - no exceptions
+  const existingButtons = document.querySelectorAll('.quick-add-button');
+  existingButtons.forEach(btn => {
     try {
       btn.remove();
     } catch (e) {
-      console.warn('Failed to remove existing button:', e);
+      // Button already removed, ignore
     }
   });
   
-  console.log('Creating new Quick Add button');
+  // Verify they're really gone
+  const remainingButtons = document.querySelectorAll('.quick-add-button');
+  if (remainingButtons.length > 0) {
+    remainingButtons.forEach(btn => {
+      try {
+        btn.parentElement?.removeChild(btn);
+      } catch (e) {
+        // Ignore
+      }
+    });
+  }
   
   // Create the Quick Add button
   const quickAddButton = document.createElement('button');
@@ -119,11 +105,11 @@ function setupQuickAddButton(createButton) {
   
   // Style the button to match Google Calendar's create button
   quickAddButton.style.cssText = `
-    display: flex !important;
+    display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    margin-left: 18px !important;
-    padding: 6px !important;
+    margin: 0 8px !important;
+    padding: 6px 12px !important;
     background: #4285f4 !important;
     color: white !important;
     border: none !important;
@@ -132,13 +118,17 @@ function setupQuickAddButton(createButton) {
     font-family: 'Google Sans', Roboto, Arial, sans-serif !important;
     font-size: 14px !important;
     font-weight: 500 !important;
-    height: 22px !important;
+    height: 32px !important;
     min-width: auto !important;
     transition: all 0.2s ease !important;
     box-shadow: 0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15) !important;
     position: relative !important;
-    z-index: 1000 !important;
+    z-index: 9999 !important;
     user-select: none !important;
+    white-space: nowrap !important;
+    text-decoration: none !important;
+    vertical-align: middle !important;
+    flex-shrink: 0 !important;
   `;
   
   // Add content with icon and text
@@ -161,73 +151,152 @@ function setupQuickAddButton(createButton) {
   // Add click handler
   quickAddButton.addEventListener('click', handleQuickAddClick);
   
-  // Try multiple insertion strategies
+  // Insert the button using the most reliable method
   const insertButton = () => {
     const createButtonContainer = createButton.parentElement;
+    
+    // Try to position the button below the Create button instead of to the right
+    const positionBelowCreate = () => {
+      // Find a suitable container that can hold the button below the create button
+      const targetContainers = [
+        createButton.closest('[role="banner"]'),
+        createButton.closest('header'),
+        createButton.closest('.gb_tc'),
+        createButton.closest('.gb_A'),
+        createButton.closest('div[style*="flex"]'),
+        createButtonContainer?.parentElement,
+        document.querySelector('[role="banner"]')
+      ];
+      
+      for (const container of targetContainers) {
+        if (container) {
+          try {
+            
+            // Create a wrapper div that positions the button below the create button
+            const wrapper = document.createElement('div');
+            wrapper.style.cssText = `
+              display: block !important;
+              width: 100% !important;
+              margin-top: 8px !important;
+              margin-bottom: 4px !important;
+            `;
+            
+            // Style the quick add button for below positioning
+            quickAddButton.style.cssText = `
+              display: inline-flex !important;
+              align-items: center !important;
+              justify-content: center !important;
+              margin: 0 !important;
+              padding: 4px 12px !important;
+              background: #4285f4 !important;
+              color: white !important;
+              border: none !important;
+              border-radius: 4px !important;
+              cursor: pointer !important;
+              font-family: 'Google Sans', Roboto, Arial, sans-serif !important;
+              font-size: 14px !important;
+              font-weight: 500 !important;
+              height: 26px !important;
+              min-width: auto !important;
+              transition: all 0.2s ease !important;
+              box-shadow: 0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15) !important;
+              position: relative !important;
+              z-index: 9999 !important;
+              user-select: none !important;
+              white-space: nowrap !important;
+              text-decoration: none !important;
+              vertical-align: middle !important;
+              flex-shrink: 0 !important;
+            `;
+            
+            wrapper.appendChild(quickAddButton);
+            
+            // Insert the wrapper after the create button's container
+            if (createButtonContainer && createButtonContainer.parentElement === container) {
+              container.insertBefore(wrapper, createButtonContainer.nextSibling);
+              return true;
+            } else if (container.contains(createButton)) {
+              container.appendChild(wrapper);
+              return true;
+            }
+          } catch (e) {
+            // Continue to next container
+          }
+        }
+      }
+      return false;
+    };
+    
+    // First try to position below the create button
+    if (positionBelowCreate()) {
+      return true;
+    }
+    
+    // Fallback to original side-by-side positioning if below positioning fails
+    
+    // Check if parent has display: contents which can cause issues
+    if (createButtonContainer) {
+      const parentStyle = window.getComputedStyle(createButtonContainer);
+      
+      if (parentStyle.display === 'contents') {
+        
+        // Look for a stable parent container
+        const stableContainers = [
+          createButton.closest('[role="banner"]'),
+          createButton.closest('header'),
+          createButton.closest('.gb_tc'),
+          createButton.closest('.gb_A'),
+          createButton.closest('div[style*="flex"]'),
+          createButton.parentElement?.parentElement,
+          document.querySelector('[role="banner"]')
+        ];
+        
+        for (const container of stableContainers) {
+          if (container && container !== createButtonContainer) {
+            try {
+              const containerStyle = window.getComputedStyle(container);
+              
+              if (containerStyle.display !== 'contents' && containerStyle.display !== 'none') {
+                // Create a wrapper div to ensure proper positioning
+                const wrapper = document.createElement('div');
+                wrapper.style.cssText = `
+                  display: inline-flex !important;
+                  align-items: center !important;
+                  margin-left: 8px !important;
+                `;
+                wrapper.appendChild(quickAddButton);
+                
+                container.appendChild(wrapper);
+                return true;
+              }
+            } catch (e) {
+              // Continue to next container
+            }
+          }
+        }
+      }
+    }
+    
     if (createButtonContainer && createButton.isConnected) {
-      // Strategy 1: Insert as sibling
       try {
         if (createButton.nextSibling) {
           createButtonContainer.insertBefore(quickAddButton, createButton.nextSibling);
         } else {
           createButtonContainer.appendChild(quickAddButton);
         }
-        console.log('Quick Add button inserted as sibling');
+        
         return true;
       } catch (error) {
-        console.log('Sibling insertion failed:', error);
+        return false;
       }
-      
-      // Strategy 2: Append to container
-      try {
-        createButtonContainer.appendChild(quickAddButton);
-        console.log('Quick Add button appended to container');
-        return true;
-      } catch (error) {
-        console.log('Container append failed:', error);
-      }
+    } else {
+      return false;
     }
-    
-    // Strategy 3: Insert into a higher-level container
-    const higherContainer = createButton.closest('[role="main"]') || 
-                           createButton.closest('.gb_tc') ||
-                           createButton.closest('div');
-    if (higherContainer) {
-      try {
-        higherContainer.appendChild(quickAddButton);
-        console.log('Quick Add button inserted into higher container');
-        return true;
-      } catch (error) {
-        console.log('Higher container insertion failed:', error);
-      }
-    }
-    
-    return false;
   };
   
   if (insertButton()) {
-    // Set up a watcher to re-insert if removed
-    const reconnectButton = () => {
-      if (!quickAddButton.isConnected && createButton.isConnected) {
-        console.log('Quick Add button disconnected, reconnecting...');
-        if (insertButton()) {
-          console.log('Quick Add button reconnected successfully');
-        }
-      }
-    };
-    
-    // Check every 500ms if button is still connected
-    const reconnectInterval = setInterval(() => {
-      if (!createButton.isConnected) {
-        clearInterval(reconnectInterval);
-        return;
-      }
-      reconnectButton();
-    }, 500);
-    
     return quickAddButton;
   } else {
-    console.error('All insertion strategies failed');
     return null;
   }
 }
@@ -236,8 +305,6 @@ function setupQuickAddButton(createButton) {
 function handleQuickAddClick(event) {
   event.preventDefault();
   event.stopPropagation();
-  
-  console.log('Quick Add button clicked!');
   
   // Check if input container already exists
   let inputContainer = document.querySelector('.quick-event-input-container');
@@ -577,214 +644,267 @@ function handleCreateEvent(eventText) {
       throw new Error('Natural language processing not available');
     }
     
-    console.log('Processing event text:', eventText);
+    // Split by semicolons to handle multiple events
+    const events = eventText.split(';').map(e => e.trim()).filter(Boolean);
     
-    // Generate event URLs
-    const eventUrls = window.GoogleCalendarNLP.createEventUrls(eventText);
-    
-    if (eventUrls && eventUrls.length > 0) {
-      console.log('Generated event URLs:', eventUrls);
-      
-      // Navigate to the first event URL
-      window.location.href = eventUrls[0];
-      
-      // Hide input after short delay
-      setTimeout(() => {
-        hideQuickEventInput();
-      }, 500);
-      
-    } else {
-      throw new Error('Could not generate event from the provided text');
+    if (events.length === 0) {
+      throw new Error('No valid events found');
     }
     
+    const eventUrls = [];
+    
+    // Generate URLs for each event
+    for (const singleEventText of events) {
+      try {
+        const urls = window.GoogleCalendarNLP.createEventUrls(singleEventText);
+        if (urls && urls.length > 0) {
+          eventUrls.push(...urls);
+        }
+      } catch (error) {
+        // Continue processing other events even if one fails
+        console.warn(`Failed to process event: "${singleEventText}"`, error);
+      }
+    }
+    
+    if (eventUrls.length === 0) {
+      throw new Error('Could not generate any events from the provided text');
+    }
+    
+    // Navigate to the first event URL (primary behavior)
+    window.location.href = eventUrls[0];
+    
+    // If there are multiple events, open additional tabs (optional enhancement)
+    if (eventUrls.length > 1) {
+      for (let i = 1; i < eventUrls.length; i++) {
+        window.open(eventUrls[i], '_blank');
+      }
+    }
+    
+    // Hide input after short delay
+    setTimeout(() => {
+      hideQuickEventInput();
+    }, 500);
+    
   } catch (error) {
-    console.error('Error creating event:', error);
     
     // Hide loading and show error
     if (loading) loading.classList.remove('show');
     if (actions) actions.style.display = 'flex';
     
-    // Show error message (simple alert for now, can be enhanced later)
-    alert(`Error creating event: ${error.message}\n\nPlease try a different format, like:\n"Meeting tomorrow 2pm"\n"Lunch Friday 1pm to 2pm"`);
+    // Show error message
+    const errorMessages = [
+      `Error creating event${eventText.includes(';') ? 's' : ''}: ${error.message}`,
+      '',
+      'Please try a different format, like:',
+      '"Meeting tomorrow 2pm"',
+      '"Lunch Friday 1pm to 2pm"'
+    ];
+    
+    if (eventText.includes(';')) {
+      errorMessages.push('"Meeting 2pm; Lunch 5pm" (multiple events)');
+    }
+    
+    alert(errorMessages.join('\n'));
   }
 }
 
-// Set up mutation observer to maintain our Quick Add button
-function setupMutationObserver(createButton, quickAddButton) {
-  let isApplyingStyle = false; // Flag to prevent infinite loops
+// Simple button maintenance - ensures exactly one button exists
+function maintainSingleButton(createButton) {
+  let lastKnownCreateButton = createButton;
   
-  const observer = new MutationObserver((mutations) => {
-    // Skip if we're currently applying styles to avoid infinite loops
-    if (isApplyingStyle) return;
+  const checkAndMaintain = () => {
+    if (!isExtensionInitialized) {
+      return;
+    }
     
-    let needsReapply = false;
-    
-    mutations.forEach((mutation) => {
-      // Check if our Quick Add button was removed
-      if (mutation.type === 'childList') {
-        mutation.removedNodes.forEach((node) => {
-          if (node === quickAddButton || (node.classList && node.classList.contains('quick-add-button'))) {
-            console.log('Quick Add button was removed, need to recreate');
-            needsReapply = true;
-          }
-        });
+    // If original create button is gone, try to find a new one
+    if (!lastKnownCreateButton || !lastKnownCreateButton.isConnected) {
+      
+      // Use the same comprehensive search logic as waitForCalendarLoad
+      const selectors = [
+        '[data-action-menu="true"]',
+        '[aria-label*="Create"]',
+        '[aria-label*="create"]', 
+        '[title*="Create"]',
+        '[title*="create"]',
+        'button[jsaction*="create"]',
+        '[data-tooltip*="Create"]',
+        '[data-tooltip*="create"]',
+        'button[aria-haspopup="true"]',
+        'button[data-test-id*="create"]',
+        'button[id*="create"]',
+        'button[class*="create"]',
+        '.gb_A', // Common Google apps button class
+        '[role="button"][aria-label*="Create"]',
+        '[role="button"][aria-label*="create"]'
+      ];
+      
+      let newCreateButton = null;
+      
+      // First try selector-based search
+      for (const selector of selectors) {
+        newCreateButton = document.querySelector(selector);
+        if (newCreateButton) {
+          lastKnownCreateButton = newCreateButton;
+          break;
+        }
       }
       
-      // Check if the create button was replaced
-      if (mutation.type === 'childList' && mutation.target !== createButton) {
-        mutation.removedNodes.forEach((node) => {
-          if (node === createButton || (node.nodeType === 1 && node.contains && node.contains(createButton))) {
-            console.log('Create button was removed from DOM, need to find it again');
-            needsReapply = true;
+      // If no button found with selectors, look for buttons containing "Create" text
+      if (!newCreateButton) {
+        const allButtons = document.querySelectorAll('button');
+        for (const button of allButtons) {
+          const text = button.textContent?.toLowerCase() || '';
+          const ariaLabel = button.getAttribute('aria-label')?.toLowerCase() || '';
+          const title = button.getAttribute('title')?.toLowerCase() || '';
+          
+          if (text.includes('create') || ariaLabel.includes('create') || title.includes('create')) {
+            newCreateButton = button;
+            lastKnownCreateButton = newCreateButton;
+            break;
           }
-        });
-      }
-    });
-    
-    if (needsReapply) {
-      console.log('DOM change detected, checking if Quick Add button needs recreation...');
-      isApplyingStyle = true;
-      setTimeout(() => {
-        // Only recreate if extension is still initialized and button doesn't exist
-        if (isExtensionInitialized && createButton && createButton.isConnected) {
-          const existingButton = document.querySelector('.quick-add-button');
-          if (!existingButton || !existingButton.isConnected) {
-            console.log('Recreating Quick Add button due to DOM change');
-            setupQuickAddButton(createButton);
-          } else {
-            console.log('Quick Add button still exists, skipping recreation');
-          }
-        } else if (isExtensionInitialized) {
-          console.log('Create button no longer connected, reinitializing...');
-          reinitialize();
         }
-        isApplyingStyle = false;
-      }, 100);
+      }
+      
+      // If still no button found, try finding any button in header/banner areas
+      if (!newCreateButton) {
+        const headerAreas = [
+          document.querySelector('[role="banner"]'),
+          document.querySelector('header'),
+          document.querySelector('.gb_tc'),
+          document.querySelector('.gb_A'),
+          document.querySelector('[data-test-id*="header"]')
+        ];
+        
+        for (const area of headerAreas) {
+          if (area) {
+            const buttons = area.querySelectorAll('button');
+            if (buttons.length > 0) {
+              // Take the first button we find in header areas as a fallback
+              newCreateButton = buttons[0];
+              lastKnownCreateButton = newCreateButton;
+              break;
+            }
+          }
+        }
+      }
+      
+      if (!newCreateButton) {
+        return;
+      }
     }
+    
+    const existingButtons = document.querySelectorAll('.quick-add-button');
+    const connectedButtons = Array.from(existingButtons).filter(btn => btn.isConnected);
+    
+    if (connectedButtons.length === 0) {
+      // No button exists, create one
+      setupQuickAddButton(lastKnownCreateButton);
+    } else if (connectedButtons.length > 1) {
+      // Multiple buttons exist, keep only the first one
+      for (let i = 1; i < connectedButtons.length; i++) {
+        try {
+          connectedButtons[i].remove();
+        } catch (e) {
+          // Ignore removal errors
+        }
+      }
+    } else {
+      // Exactly 1 button exists - check if it's actually visible
+      const button = connectedButtons[0];
+      const rect = button.getBoundingClientRect();
+      const isVisible = rect.width > 0 && rect.height > 0;
+      
+      if (!isVisible) {
+        button.remove();
+        setupQuickAddButton(lastKnownCreateButton);
+      }
+    }
+  };
+  
+  // Check every 5 seconds to maintain exactly one button (reduced frequency)
+  const maintenanceInterval = setInterval(checkAndMaintain, 5000);
+  
+  // Also check when the page is idle (no recent mutations)
+  let mutationTimer = null;
+  let consecutiveFailures = 0;
+  const observer = new MutationObserver(() => {
+    // Reset the timer on any mutation
+    clearTimeout(mutationTimer);
+    mutationTimer = setTimeout(() => {
+      checkAndMaintain();
+      
+      // If we keep failing to find buttons, reduce check frequency
+      const currentButtons = document.querySelectorAll('.quick-add-button');
+      if (currentButtons.length === 0) {
+        consecutiveFailures++;
+        if (consecutiveFailures > 5) {
+          clearInterval(maintenanceInterval);
+          // Restart with longer interval
+          setInterval(checkAndMaintain, 10000);
+          consecutiveFailures = 0;
+        }
+      } else {
+        consecutiveFailures = 0; // Reset on success
+      }
+    }, 1000); // Increased delay to 1 second after mutations stop
   });
   
-  // Watch the create button's parent container for changes
-  const parentContainer = createButton.closest('[role="main"], .gb_A, .gb_wa, .gb_tc') || createButton.parentElement;
-  if (parentContainer) {
-    observer.observe(parentContainer, {
-      childList: true,
-      subtree: true
-    });
-  }
+  // Observe the entire document for changes
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
   
-  console.log('Mutation observer set up for Quick Add button maintenance');
-  return observer;
+  return {
+    interval: maintenanceInterval,
+    observer: observer
+  };
 }
-
-// Reinitialize if button gets replaced
-async function reinitialize() {
-  // Don't reinitialize if extension is not supposed to be initialized
-  if (!isExtensionInitialized) {
-    console.log('Extension not initialized, skipping reinitialize');
-    return;
-  }
-  
-  try {
-    console.log('Reinitializing extension...');
-    const newCreateButton = await waitForCalendarLoad();
-    const quickAddButton = setupQuickAddButton(newCreateButton);
-    if (quickAddButton) {
-      setupMutationObserver(newCreateButton, quickAddButton);
-    }
-    console.log('Extension reinitialized with new button');
-  } catch (error) {
-    console.error('Failed to reinitialize:', error);
-  }
-}
-
 
 // Initialize the extension
 async function init() {
   // Prevent multiple initializations
   if (isExtensionInitialized) {
-    console.log('Extension already initialized, skipping');
     return;
   }
   
   // If there's already an initialization in progress, wait for it
   if (initializationPromise) {
-    console.log('Initialization already in progress, waiting...');
     return initializationPromise;
   }
   
   // Mark as initializing and create promise
   initializationPromise = (async () => {
     try {
-      console.log('Initializing Google Calendar Natural Language Input...');
       
       // Clean up any existing Quick Add buttons first
       const existingButtons = document.querySelectorAll('.quick-add-button');
-      console.log(`Cleaning up ${existingButtons.length} existing Quick Add buttons`);
       existingButtons.forEach(btn => {
         try {
           btn.remove();
         } catch (e) {
-          console.warn('Failed to remove existing button:', e);
+          // Ignore removal errors
         }
       });
       
       const createButton = await waitForCalendarLoad();
-      console.log('Google Calendar loaded successfully, create button found');
       
       // Create the Quick Add button next to the create button
       const quickAddButton = setupQuickAddButton(createButton);
       
       if (!quickAddButton) {
-        console.error('Failed to create Quick Add button');
         return;
       }
       
-      // Set up mutation observer to maintain Quick Add button
-      const observer = setupMutationObserver(createButton, quickAddButton);
-      
-      // Aggressively maintain Quick Add button
-      let currentCreateButton = createButton;
-      let currentQuickAddButton = quickAddButton;
-      
-      const maintainButton = () => {
-        // Skip maintenance if we're no longer initialized
-        if (!isExtensionInitialized) {
-          return;
-        }
-        
-        // Check if create button still exists
-        if (!currentCreateButton || !currentCreateButton.isConnected) {
-          console.log('Create button lost, searching for new one...');
-          waitForCalendarLoad().then((newButton) => {
-            if (newButton && newButton !== currentCreateButton && isExtensionInitialized) {
-              console.log('Found new create button');
-              currentCreateButton = newButton;
-              currentQuickAddButton = setupQuickAddButton(currentCreateButton);
-              setupMutationObserver(currentCreateButton, currentQuickAddButton);
-            }
-          }).catch(() => {
-            console.log('Could not find create button');
-          });
-          return;
-        }
-        
-        // Check if Quick Add button still exists and is connected
-        const existingQuickAdd = document.querySelector('.quick-add-button');
-        if (!existingQuickAdd || !existingQuickAdd.isConnected) {
-          console.log('Quick Add button missing, recreating...');
-          currentQuickAddButton = setupQuickAddButton(currentCreateButton);
-        }
-      };
-      
-      // Check every 2 seconds
-      setInterval(maintainButton, 2000);
+      // Set up simple maintenance system to ensure exactly one button
+      const maintenance = maintainSingleButton(createButton);
       
       // Mark as successfully initialized
       isExtensionInitialized = true;
-      console.log('Extension initialized successfully with Quick Add button');
       
     } catch (error) {
-      console.error('Failed to initialize extension:', error);
+      // Ignore initialization errors
     } finally {
       // Clear the initialization promise
       initializationPromise = null;
@@ -805,14 +925,12 @@ if (document.readyState === 'loading') {
 window.addEventListener('beforeunload', () => {
   isExtensionInitialized = false;
   initializationPromise = null;
-  console.log('Extension cleanup on page unload');
 });
 
 // Handle single-page app navigation (like Google Calendar)
 let currentUrl = window.location.href;
 const urlCheckInterval = setInterval(() => {
   if (window.location.href !== currentUrl) {
-    console.log('URL changed, reinitializing extension');
     currentUrl = window.location.href;
     isExtensionInitialized = false;
     initializationPromise = null;

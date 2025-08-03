@@ -2844,6 +2844,7 @@ input.addEventListener('input', (e) => {
   const hasText = e.target.value.trim().length > 0;
   createBtn.disabled = !hasText;
   hideError();
+  autoResizeTextarea();
 });
 
 // Handle Enter key to create events
@@ -2934,11 +2935,15 @@ function hideLoading() {
 function showError(message) {
   errorMessage.textContent = message;
   errorMessage.classList.add('show');
+  // Update popup height when error appears
+  setTimeout(updatePopupHeight, 10);
 }
 
 // Hide error message
 function hideError() {
   errorMessage.classList.remove('show');
+  // Update popup height when error is hidden
+  setTimeout(updatePopupHeight, 10);
 }
 
 // Show help information
@@ -2973,4 +2978,27 @@ Tips:
 // Auto-focus input when popup opens
 document.addEventListener('DOMContentLoaded', () => {
   input.focus();
+  updatePopupHeight();
 });
+
+// Auto-resize popup height based on content
+function updatePopupHeight() {
+  // Calculate the required height
+  const container = document.querySelector('.quick-event-popup-container');
+  const containerHeight = container.scrollHeight;
+  
+  // Add some padding for safety
+  const desiredHeight = Math.max(200, Math.min(500, containerHeight + 16));
+  
+  // Update body height
+  document.body.style.height = `${desiredHeight}px`;
+}
+
+// Auto-resize textarea based on content
+function autoResizeTextarea() {
+  input.style.height = 'auto';
+  input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+  
+  // Update popup height after textarea resize
+  setTimeout(updatePopupHeight, 10);
+}
