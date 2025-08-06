@@ -355,7 +355,7 @@ function createQuickEventInput() {
     />
     
     <div class="quick-event-help">
-      d(description) - l(location) - multiple events (;) - recurrences "every N days/weeks/etc"
+      d(description) - l(location) - multiple events (;) - recurrences "every N days/weeks/etc" - use settings to manage saved calendars
       </div>
     
     <div class="quick-event-loading">
@@ -373,6 +373,9 @@ function createQuickEventInput() {
       <button class="quick-event-btn quick-event-btn-primary" id="quick-event-create" disabled>
         Create Event(s)
       </button>
+      <button class="quick-event-btn quick-event-btn-settings" id="quick-event-settings" title="Calendar Settings">
+        ⚙️
+      </button>
     </div>
   `;
   
@@ -388,6 +391,7 @@ function setupQuickEventListeners(container) {
   const createBtn = container.querySelector('#quick-event-create');
   const cancelBtn = container.querySelector('#quick-event-cancel');
   const helpBtn = container.querySelector('#quick-event-help');
+  const settingsBtn = container.querySelector('#quick-event-settings');
   const closeBtn = container.querySelector('.quick-event-close');
   
   // Input event listener for enabling/disabling create button
@@ -425,6 +429,12 @@ function setupQuickEventListeners(container) {
   helpBtn.addEventListener('click', (e) => {
     e.preventDefault();
     showHelp();
+  });
+  
+  // Settings button click
+  settingsBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    showSettings();
   });
   
   // Close button click
@@ -561,6 +571,7 @@ function showHelp() {
             <li><strong>Locations:</strong> "Dinner l(Applebees)"</li>
             <li><strong>Recurring:</strong> "Team standup every Monday 9-915am"</li>
             <li><strong>Multiple events:</strong> "Jam session 1pm; Carlos Birthday 5pm every year"</li>
+            <li><strong>Calendar targeting:</strong> "Meeting tomorrow 2pm @work"</li>
           </ul>
         </div>
 
@@ -578,6 +589,15 @@ function showHelp() {
           <ul>
             <li>"every day", "every week", "every month"</li>
             <li>"every Monday", "every 2 weeks"</li>
+          </ul>
+        </div>
+
+        <div class="quick-event-help-section">
+          <h4>Calendar Nicknames:</h4>
+          <ul>
+            <li>Set up calendar nicknames in Settings (⚙️ button)</li>
+            <li>Use @nickname to target specific calendars</li>
+            <li>Examples: @work, @personal, @gym</li>
           </ul>
         </div>
 
@@ -627,8 +647,314 @@ function showHelp() {
   });
 }
 
+// Show settings dialog
+async function showSettings() {
+  // Check if settings modal already exists
+  let settingsModal = document.querySelector('.quick-event-settings-modal');
+  if (settingsModal) {
+    settingsModal.remove();
+  }
+
+  // Create settings modal
+  settingsModal = document.createElement('div');
+  settingsModal.className = 'quick-event-settings-modal';
+  
+  settingsModal.innerHTML = `
+    <div class="quick-event-settings-overlay"></div>
+    <div class="quick-event-settings-content">
+      <div class="quick-event-settings-header">
+        <h3 class="quick-event-settings-title">Calendar Settings</h3>
+        <button class="quick-event-settings-close" title="Close">×</button>
+      </div>
+      
+      <div class="quick-event-settings-body">
+        <div class="calendar-table-container">
+          <table class="calendar-table">
+            <thead>
+              <tr>
+                <th>Nickname</th>
+                <th>Calendar ID</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="content-calendar-table-body">
+              <tr class="add-row">
+                <td>
+                  <input type="text" class="nickname-input" placeholder="@nickname" maxlength="50" id="content-new-nickname">
+                </td>
+                <td>
+                  <input type="text" class="calendar-id-input" placeholder="calendar@example.com" maxlength="180" id="content-new-calendar-id">
+                </td>
+                <td>
+                  <button class="save-btn" id="content-save-calendar">Save</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <div class="quick-event-settings-footer">
+        <button class="quick-event-btn quick-event-btn-primary quick-event-settings-done">
+          Done
+        </button>
+      </div>
+    </div>
+  `;
+
+  // Add event listeners
+  setupContentSettingsListeners(settingsModal);
+
+  // Add to DOM and show
+  document.body.appendChild(settingsModal);
+  
+  // Load and display saved calendars
+  await loadContentSavedCalendars();
+  
+  // Animate in
+  requestAnimationFrame(() => {
+    settingsModal.classList.add('show');
+  });
+}
+
+// Setup settings event listeners for content script
+function setupContentSettingsListeners(modal) {
+  const closeBtn = modal.querySelector('.quick-event-settings-close');
+  const doneBtn = modal.querySelector('.quick-event-settings-done');
+  const saveBtn = modal.querySelector('#content-save-calendar');
+  const nicknameInput = modal.querySelector('#content-new-nickname');
+  const calendarIdInput = modal.querySelector('#content-new-calendar-id');
+  const overlay = modal.querySelector('.quick-event-settings-overlay');
+
+  const closeSettings = () => {
+    modal.remove();
+  };
+
+  // Close button and overlay
+  closeBtn.addEventListener('click', closeSettings);
+  doneBtn.addEventListener('click', closeSettings);
+  overlay.addEventListener('click', closeSettings);
+
+  // Save button
+  saveBtn.addEventListener('click', async () => {
+    await saveContentNewCalendar();
+  });
+
+  // Auto-format nickname with @ symbol and validate characters
+  nicknameInput.addEventListener('input', (e) => {
+    let value = e.target.value;
+    
+    // Ensure it starts with @
+    if (value && !value.startsWith('@')) {
+      value = '@' + value;
+    }
+    
+    // Remove invalid characters (keep only alphanumeric after @)
+    if (value.length > 1) {
+      const afterAt = value.substring(1);
+      const cleanAfterAt = afterAt.replace(/[^a-zA-Z0-9]/g, '');
+      value = '@' + cleanAfterAt;
+    }
+    
+    e.target.value = value;
+  });
+
+  // Enter key to save
+  calendarIdInput.addEventListener('keydown', async (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      await saveContentNewCalendar();
+    }
+  });
+
+  // Escape key to close
+  const handleEscape = (e) => {
+    if (e.key === 'Escape') {
+      closeSettings();
+      document.removeEventListener('keydown', handleEscape);
+    }
+  };
+  document.addEventListener('keydown', handleEscape);
+}
+
+// Load saved calendars from storage for content script
+async function loadContentSavedCalendars() {
+  try {
+    const storage = await chrome.storage.sync.get('savedCalendars');
+    const savedCalendars = storage.savedCalendars || {};
+    
+    displayContentCalendars(savedCalendars);
+  } catch (error) {
+    console.error('Error loading saved calendars:', error);
+    // Show user-friendly error message
+    alert('Error loading saved calendars. The settings may not display correctly.');
+    // Still try to display empty calendars as fallback
+    displayContentCalendars({});
+  }
+}
+
+// Display calendars in the table for content script
+function displayContentCalendars(calendars) {
+  const tbody = document.querySelector('#content-calendar-table-body');
+  const addRow = tbody.querySelector('.add-row');
+  
+  // Clear existing rows (except add row)
+  const existingRows = tbody.querySelectorAll('tr:not(.add-row)');
+  existingRows.forEach(row => row.remove());
+  
+  // Add calendar rows
+  Object.entries(calendars).forEach(([nickname, calendarId]) => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td class="nickname-cell">${sanitizeContentInput(nickname)}</td>
+      <td class="calendar-id-cell" title="${sanitizeContentInput(calendarId)}">${truncateContentCalendarId(sanitizeContentInput(calendarId))}</td>
+      <td>
+        <button class="remove-btn" data-nickname="${sanitizeContentInput(nickname)}">Remove</button>
+      </td>
+    `;
+    
+    // Add remove functionality
+    const removeBtn = row.querySelector('.remove-btn');
+    removeBtn.addEventListener('click', async () => {
+      await removeContentCalendar(nickname);
+    });
+    
+    tbody.insertBefore(row, addRow);
+  });
+}
+
+// Truncate calendar ID for display in content script
+function truncateContentCalendarId(calendarId) {
+  if (calendarId.length <= 30) {
+    return calendarId;
+  }
+  return calendarId.substring(0, 30) + '...';
+}
+
+// Sanitize user input to prevent XSS in content script
+function sanitizeContentInput(input) {
+  if (typeof input !== 'string') return '';
+  
+  return input
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .replace(/\//g, '&#x2F;')
+    .trim();
+}
+
+// Save new calendar in content script
+async function saveContentNewCalendar() {
+  const nicknameInput = document.querySelector('#content-new-nickname');
+  const calendarIdInput = document.querySelector('#content-new-calendar-id');
+  
+  let nickname = sanitizeContentInput(nicknameInput.value);
+  const calendarId = sanitizeContentInput(calendarIdInput.value);
+  
+  if (!nickname || !calendarId) {
+    alert('Please enter both nickname and calendar ID');
+    return;
+  }
+  
+  // Ensure nickname starts with @
+  if (!nickname.startsWith('@')) {
+    nickname = '@' + nickname;
+  }
+  
+  // Validate nickname format (only alphanumeric characters after @)
+  const nicknamePattern = /^@[a-zA-Z0-9]+$/;
+  if (!nicknamePattern.test(nickname)) {
+    alert('Invalid nickname format. Nicknames must start with @ and contain only alphanumeric characters (letters and numbers). No spaces, hyphens, or special characters allowed.\n\nExample: @work, @personal, @gym123');
+    return;
+  }
+  
+  // Validate calendar ID format (comprehensive email validation)
+  const emailPattern = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+  if (!emailPattern.test(calendarId)) {
+    alert('Invalid calendar ID format. Calendar IDs must be valid email addresses.\n\nExamples:\n• your-calendar@gmail.com\n• calendar+work@example.com\n• calendar123@domain.co.uk\n• work.calendar@company.org');
+    return;
+  }
+  
+  // Additional validation for calendar ID length (Google Calendar limits)
+  if (calendarId.length > 254) {
+    alert('Calendar ID is too long. Please use a shorter email address (maximum 254 characters).');
+    return;
+  }
+  
+  try {
+    // Get existing calendars
+    const storage = await chrome.storage.sync.get('savedCalendars');
+    const savedCalendars = storage.savedCalendars || {};
+    
+    // Check for duplicate nickname and confirm overwrite
+    if (savedCalendars[nickname]) {
+      const confirmOverwrite = confirm(`The nickname "${nickname}" already exists with calendar ID:\n${savedCalendars[nickname]}\n\nDo you want to overwrite it with the new calendar ID:\n${calendarId}?`);
+      if (!confirmOverwrite) {
+        return;
+      }
+    }
+    
+    // Add new calendar
+    savedCalendars[nickname] = calendarId;
+    
+    // Save to storage
+    await chrome.storage.sync.set({ savedCalendars });
+    
+    // Clear inputs
+    nicknameInput.value = '';
+    calendarIdInput.value = '';
+    
+    // Reload display
+    await loadContentSavedCalendars();
+    
+  } catch (error) {
+    console.error('Error saving calendar:', error);
+    let errorMessage = 'Error saving calendar. ';
+    
+    if (error.message && error.message.includes('QUOTA_BYTES_PER_ITEM quota exceeded')) {
+      errorMessage += 'Storage quota exceeded. Please remove some calendars before adding new ones.';
+    } else if (error.message && error.message.includes('MAX_WRITE_OPERATIONS_PER_MINUTE quota exceeded')) {
+      errorMessage += 'Too many operations. Please wait a moment before trying again.';
+    } else {
+      errorMessage += 'Please try again.';
+    }
+    
+    alert(errorMessage);
+  }
+}
+
+// Remove calendar in content script
+async function removeContentCalendar(nickname) {
+  try {
+    const storage = await chrome.storage.sync.get('savedCalendars');
+    const savedCalendars = storage.savedCalendars || {};
+    
+    delete savedCalendars[nickname];
+    
+    await chrome.storage.sync.set({ savedCalendars });
+    
+    // Reload display
+    await loadContentSavedCalendars();
+    
+  } catch (error) {
+    console.error('Error removing calendar:', error);
+    let errorMessage = 'Error removing calendar. ';
+    
+    if (error.message && error.message.includes('MAX_WRITE_OPERATIONS_PER_MINUTE quota exceeded')) {
+      errorMessage += 'Too many operations. Please wait a moment before trying again.';
+    } else {
+      errorMessage += 'Please try again.';
+    }
+    
+    alert(errorMessage);
+  }
+}
+
 // Handle event creation
-function handleCreateEvent(eventText) {
+async function handleCreateEvent(eventText) {
+  // Sanitize input to prevent XSS
+  eventText = sanitizeContentInput(eventText);
   if (!eventText) return;
   
   const container = document.querySelector('.quick-event-input-container');
@@ -643,9 +969,16 @@ function handleCreateEvent(eventText) {
     if (!window.GoogleCalendarNLP) {
       throw new Error('Natural language processing not available');
     }
+
+    // Get saved calendars from storage
+    const storage = await chrome.storage.sync.get('savedCalendars');
+    const savedCalendars = storage.savedCalendars || {};
+
+    // Process calendar ID substitutions
+    const { processedText, calendarId } = await processCalendarSubstitutions(eventText, savedCalendars);
     
     // Split by semicolons to handle multiple events
-    const events = eventText.split(';').map(e => e.trim()).filter(Boolean);
+    const events = processedText.split(';').map(e => e.trim()).filter(Boolean);
     
     if (events.length === 0) {
       throw new Error('No valid events found');
@@ -669,14 +1002,24 @@ function handleCreateEvent(eventText) {
     if (eventUrls.length === 0) {
       throw new Error('Could not generate any events from the provided text');
     }
+
+    // Add calendar ID parameter if specified
+    const finalUrls = eventUrls.map(url => {
+      if (calendarId) {
+        const urlObj = new URL(url);
+        urlObj.searchParams.set('src', calendarId);
+        return urlObj.toString();
+      }
+      return url;
+    });
     
     // Navigate to the first event URL (primary behavior)
-    window.location.href = eventUrls[0];
+    window.location.href = finalUrls[0];
     
     // If there are multiple events, open additional tabs (optional enhancement)
-    if (eventUrls.length > 1) {
-      for (let i = 1; i < eventUrls.length; i++) {
-        window.open(eventUrls[i], '_blank');
+    if (finalUrls.length > 1) {
+      for (let i = 1; i < finalUrls.length; i++) {
+        window.open(finalUrls[i], '_blank');
       }
     }
     
@@ -706,6 +1049,34 @@ function handleCreateEvent(eventText) {
     
     alert(errorMessages.join('\n'));
   }
+}
+
+// Process calendar ID substitutions in event text
+async function processCalendarSubstitutions(eventText, savedCalendars) {
+  // Look for @nickname patterns in the text (alphanumeric only)
+  const calendarPattern = /@([a-zA-Z0-9]+)/g;
+  const matches = [...eventText.matchAll(calendarPattern)];
+  
+  if (matches.length === 0) {
+    return { processedText: eventText, calendarId: null };
+  }
+  
+  // For now, use the first calendar ID found
+  // In the future, could support multiple calendars for multiple events
+  const firstMatch = matches[0];
+  const nickname = '@' + firstMatch[1];
+  
+  // Check if this nickname exists in saved calendars
+  const calendarId = savedCalendars[nickname];
+  
+  if (!calendarId) {
+    throw new Error(`Calendar nickname "${nickname}" not found. Please add it in Settings.`);
+  }
+  
+  // Remove the @nickname from the text (it's not part of the event description)
+  const processedText = eventText.replace(calendarPattern, '').trim();
+  
+  return { processedText, calendarId };
 }
 
 // Simple button maintenance - ensures exactly one button exists

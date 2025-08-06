@@ -5,14 +5,14 @@
     <style>
         body {
             width: 380px;
-            max-height: 500px;
+            max-height: 600px;
             height: fit-content;
             margin: 0;
             padding: 0;
             font-family: 'Google Sans', Roboto, Arial, sans-serif;
             background: white;
             box-sizing: border-box;
-            overflow: hidden;
+            overflow-y: auto;
         }
 
         .quick-event-popup-container {
@@ -20,6 +20,139 @@
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
+        }
+
+        /* Settings Container */
+        .settings-container {
+            display: none;
+            padding: 16px;
+            box-sizing: border-box;
+            flex-direction: column;
+        }
+
+        .settings-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #dadce0;
+        }
+
+        .settings-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #3c4043;
+            margin: 0;
+        }
+
+        .settings-back-btn {
+            background: transparent;
+            color: #5f6368;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            padding: 6px 12px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .settings-back-btn:hover {
+            background: #f8f9fa;
+        }
+
+        .calendar-table-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .calendar-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .calendar-table th {
+            background: #f8f9fa;
+            color: #3c4043;
+            font-weight: 500;
+            padding: 12px 8px;
+            text-align: left;
+            border: 1px solid #dadce0;
+            position: sticky;
+            top: 0;
+        }
+
+        .calendar-table td {
+            padding: 8px;
+            border: 1px solid #dadce0;
+            vertical-align: middle;
+        }
+
+        .calendar-table tr:nth-child(even) {
+            background: #fafafa;
+        }
+
+        .add-row {
+            background: #e8f0fe !important;
+        }
+
+        .nickname-input, .calendar-id-input {
+            width: 100%;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            padding: 6px 8px;
+            font-size: 13px;
+            font-family: 'Google Sans', Roboto, Arial, sans-serif;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        .nickname-input:focus, .calendar-id-input:focus {
+            border-color: #4285f4;
+            box-shadow: 0 0 0 1px #4285f4;
+        }
+
+        .nickname-cell {
+            font-weight: 500;
+            color: #1a73e8;
+        }
+
+        .calendar-id-cell {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #5f6368;
+            max-width: 150px;
+            word-break: break-all;
+        }
+
+        .save-btn, .remove-btn {
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+            font-family: 'Google Sans', Roboto, Arial, sans-serif;
+        }
+
+        .save-btn {
+            background: #4285f4;
+            color: white;
+        }
+
+        .save-btn:hover {
+            background: #3367d6;
+        }
+
+        .remove-btn {
+            background: #d93025;
+            color: white;
+        }
+
+        .remove-btn:hover {
+            background: #b52d20;
         }
 
         /* Reuse the same styles from content.css */
@@ -121,6 +254,23 @@
             background: #f8f9fa;
         }
 
+        .quick-event-btn-settings {
+            background: transparent;
+            color: #5f6368;
+            border: 1px solid #dadce0;
+            width: 36px;
+            height: 36px;
+            padding: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .quick-event-btn-settings:hover {
+            background: #f8f9fa;
+        }
+
         .quick-event-loading {
             display: none;
             align-items: center;
@@ -166,7 +316,78 @@
         .error-message.show {
             display: block;
         }
-    </style>
+
+        /* Help Container */
+        .help-container {
+            display: none;
+            padding: 16px;
+            box-sizing: border-box;
+            flex-direction: column;
+        }
+
+        .help-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #dadce0;
+        }
+
+        .help-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #3c4043;
+            margin: 0;
+        }
+
+        .help-back-btn {
+            background: transparent;
+            color: #5f6368;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            padding: 6px 12px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .help-back-btn:hover {
+            background: #f8f9fa;
+        }
+
+        .help-content {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .help-section {
+            margin-bottom: 20px;
+        }
+
+        .help-section h4 {
+            color: #3c4043;
+            font-size: 14px;
+            font-weight: 500;
+            margin: 0 0 8px 0;
+        }
+
+        .help-section ul {
+            margin: 0;
+            padding-left: 16px;
+        }
+
+        .help-section li {
+            color: #5f6368;
+            font-size: 13px;
+            line-height: 1.5;
+            margin-bottom: 4px;
+        }
+
+        .help-section li strong {
+            color: #3c4043;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
@@ -187,7 +408,7 @@
         ></textarea>
         
         <div class="quick-event-help">
-            d(description) - l(location) - multiple events (;) - recurrences "every N days/weeks/etc"
+            d(description) - l(location) - multiple events (;) - recurrences "every N days/weeks/etc" - use settings to manage saved calendars
         </div>
 
         <div class="error-message" id="error-message"></div>
@@ -203,6 +424,9 @@
             </button>
             <button class="quick-event-btn quick-event-btn-primary" id="quick-event-create" disabled>
                 Create Event(s)
+            </button>
+            <button class="quick-event-btn quick-event-btn-settings" id="quick-event-settings" title="Calendar Settings">
+                ⚙️
             </button>
         </div>
     </div>

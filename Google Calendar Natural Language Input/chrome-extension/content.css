@@ -169,6 +169,23 @@
   background: #f8f9fa;
 }
 
+.quick-event-btn-settings {
+  background: transparent;
+  color: #5f6368;
+  border: 1px solid #dadce0;
+  width: 36px;
+  height: 36px;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.quick-event-btn-settings:hover {
+  background: #f8f9fa;
+}
+
 /* Loading state */
 .quick-event-loading {
   display: none;
@@ -377,5 +394,235 @@
   
   .quick-event-help-title {
     font-size: 16px;
+  }
+}
+
+/* Settings Modal Styles */
+.quick-event-settings-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  font-family: 'Google Sans', Roboto, Arial, sans-serif;
+}
+
+.quick-event-settings-modal.show {
+  opacity: 1;
+}
+
+.quick-event-settings-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+}
+
+.quick-event-settings-content {
+  position: relative;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 8px 30px rgba(32,33,36,.28);
+  max-width: 600px;
+  max-height: 80vh;
+  width: 90%;
+  overflow: hidden;
+  transform: scale(0.9);
+  transition: transform 0.2s ease;
+}
+
+.quick-event-settings-modal.show .quick-event-settings-content {
+  transform: scale(1);
+}
+
+.quick-event-settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #dadce0;
+  background: #f8f9fa;
+}
+
+.quick-event-settings-title {
+  font-size: 18px;
+  font-weight: 500;
+  color: #3c4043;
+  margin: 0;
+}
+
+.quick-event-settings-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #5f6368;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  transition: background-color 0.2s ease;
+}
+
+.quick-event-settings-close:hover {
+  background-color: #e8eaed;
+}
+
+.quick-event-settings-body {
+  padding: 20px;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.calendar-table-container {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.calendar-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.calendar-table th {
+  background: #f8f9fa;
+  color: #3c4043;
+  font-weight: 500;
+  padding: 12px 8px;
+  text-align: left;
+  border: 1px solid #dadce0;
+  position: sticky;
+  top: 0;
+}
+
+.calendar-table td {
+  padding: 8px;
+  border: 1px solid #dadce0;
+  vertical-align: middle;
+}
+
+.calendar-table tr:nth-child(even) {
+  background: #fafafa;
+}
+
+.add-row {
+  background: #e8f0fe !important;
+}
+
+.nickname-input, .calendar-id-input {
+  width: 100%;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 13px;
+  font-family: 'Google Sans', Roboto, Arial, sans-serif;
+  outline: none;
+  box-sizing: border-box;
+  background: white;
+  color: black;
+}
+
+.nickname-input:focus, .calendar-id-input:focus {
+  border-color: #4285f4;
+  box-shadow: 0 0 0 1px #4285f4;
+}
+
+.nickname-cell {
+  font-weight: 500;
+  color: #1a73e8;
+}
+
+.calendar-id-cell {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: #5f6368;
+  max-width: 150px;
+  word-break: break-all;
+}
+
+.save-btn, .remove-btn {
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  font-family: 'Google Sans', Roboto, Arial, sans-serif;
+}
+
+.save-btn {
+  background: #4285f4;
+  color: white;
+}
+
+.save-btn:hover {
+  background: #3367d6;
+}
+
+.remove-btn {
+  background: #d93025;
+  color: white;
+}
+
+.remove-btn:hover {
+  background: #b52d20;
+}
+
+.quick-event-settings-footer {
+  padding: 16px 20px;
+  border-top: 1px solid #dadce0;
+  background: #f8f9fa;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Settings Modal Responsive */
+@media (max-width: 768px) {
+  .quick-event-settings-content {
+    width: 95%;
+    max-height: 90vh;
+  }
+  
+  .quick-event-settings-header,
+  .quick-event-settings-footer {
+    padding: 12px 16px;
+  }
+  
+  .quick-event-settings-body {
+    padding: 16px;
+    max-height: 60vh;
+  }
+  
+  .quick-event-settings-title {
+    font-size: 16px;
+  }
+
+  .calendar-table {
+    font-size: 12px;
+  }
+
+  .calendar-table th,
+  .calendar-table td {
+    padding: 6px 4px;
+  }
+
+  .nickname-input,
+  .calendar-id-input {
+    font-size: 12px;
+    padding: 4px 6px;
   }
 }

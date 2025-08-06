@@ -14,7 +14,11 @@ Quick Add was a Google Calendar feature that enabled creating calendar events fr
 5. Date night next Friday; walk dog in 30min 
 6. Check engine oil Thursday at 5pm every 6 months; check tires today every 410 days
 
-### Updates 11/4
+### Updates August 2025
+* Added support for saved calendars. You can now save your favorite calendars and quickly add events to them.
+* Added Quick Add button to the Google Calendar UI. This button opens a text input for natural language event creation.
+
+### Updates 11/4/2024
 * Handle multiple events. Just use the `;` to separate the different events you want to enter.
 * Handle days of the week in the past week (starting Sunday 00:00). If today was `Tuesday`, when you'd type `Get groceries on Monday at 5pm`, we'd create an event for the *past* Monday (ie `yesterday`). Now, the system recognizes any event start time that was in the last week, not including today or any date specifiers (ie November 1st), and corrects the calendar event to be the *next* Monday.
 * Added support for adding locations using the `l()` specifier. Example: `Walk dog l(Fort Greene Park)`.
