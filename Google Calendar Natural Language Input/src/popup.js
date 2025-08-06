@@ -57,23 +57,33 @@ async function handleCreateEvents() {
     const lang = storage.lang || 'en';
     const savedCalendars = storage.savedCalendars || {};
 
-    // Process calendar ID substitutions
-    const { processedText, calendarId } = await processCalendarSubstitutions(eventText, savedCalendars);
+    // Split events first, then process each individually
+    const events = eventText.split(';').map(e => e.trim()).filter(Boolean);
+    const finalUrls = [];
 
-    // Generate event URLs using the same helper function
-    const eventUrls = createEventUrls(processedText, lang);
+    for (const singleEventText of events) {
+      // Process calendar ID substitutions for this specific event
+      const { processedText, calendarId } = await processCalendarSubstitutions(singleEventText, savedCalendars);
 
-    if (eventUrls && eventUrls.length > 0) {
-      // Add calendar ID parameter if specified
-      const finalUrls = eventUrls.map(url => {
-        if (calendarId) {
-          const urlObj = new URL(url);
-          urlObj.searchParams.set('src', calendarId);
-          return urlObj.toString();
-        }
-        return url;
-      });
+      // Generate event URLs for this specific event
+      const eventUrls = createEventUrls(processedText, lang);
 
+      if (eventUrls && eventUrls.length > 0) {
+        // Add calendar ID parameter if specified for this event
+        const urlsWithCalendar = eventUrls.map(url => {
+          if (calendarId) {
+            const urlObj = new URL(url);
+            urlObj.searchParams.set('src', calendarId);
+            return urlObj.toString();
+          }
+          return url;
+        });
+        
+        finalUrls.push(...urlsWithCalendar);
+      }
+    }
+
+    if (finalUrls.length > 0) {
       // Create new tabs for each event
       finalUrls.forEach(url => {
         chrome.tabs.create({ url });
@@ -109,8 +119,7 @@ async function processCalendarSubstitutions(eventText, savedCalendars) {
     return { processedText: eventText, calendarId: null };
   }
   
-  // For now, use the first calendar ID found
-  // In the future, could support multiple calendars for multiple events
+  // Use the first calendar ID found in this specific event
   const firstMatch = matches[0];
   const nickname = '@' + firstMatch[1];
   
@@ -121,8 +130,8 @@ async function processCalendarSubstitutions(eventText, savedCalendars) {
     throw new Error(`Calendar nickname "${nickname}" not found. Please add it in Settings.`);
   }
   
-  // Remove the @nickname from the text (it's not part of the event description)
-  const processedText = eventText.replace(calendarPattern, '').trim();
+  // Remove only the @nickname from this specific event text
+  const processedText = eventText.replace(new RegExp(`@${firstMatch[1]}\\b`, 'g'), '').trim();
   
   return { processedText, calendarId };
 }

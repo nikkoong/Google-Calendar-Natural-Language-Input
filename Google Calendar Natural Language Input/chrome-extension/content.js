@@ -974,11 +974,8 @@ async function handleCreateEvent(eventText) {
     const storage = await chrome.storage.sync.get('savedCalendars');
     const savedCalendars = storage.savedCalendars || {};
 
-    // Process calendar ID substitutions
-    const { processedText, calendarId } = await processCalendarSubstitutions(eventText, savedCalendars);
-    
-    // Split by semicolons to handle multiple events
-    const events = processedText.split(';').map(e => e.trim()).filter(Boolean);
+    // Split events first, then process each individually
+    const events = eventText.split(';').map(e => e.trim()).filter(Boolean);
     
     if (events.length === 0) {
       throw new Error('No valid events found');
@@ -986,12 +983,25 @@ async function handleCreateEvent(eventText) {
     
     const eventUrls = [];
     
-    // Generate URLs for each event
+    // Process each event individually to handle @nicknames correctly
     for (const singleEventText of events) {
       try {
-        const urls = window.GoogleCalendarNLP.createEventUrls(singleEventText);
+        // Process calendar ID substitutions for this specific event
+        const { processedText, calendarId } = await processCalendarSubstitutions(singleEventText, savedCalendars);
+        
+        // Generate URLs for this specific event
+        const urls = window.GoogleCalendarNLP.createEventUrls(processedText);
         if (urls && urls.length > 0) {
-          eventUrls.push(...urls);
+          // Add calendar ID parameter if specified for this event
+          const urlsWithCalendar = urls.map(url => {
+            if (calendarId) {
+              const urlObj = new URL(url);
+              urlObj.searchParams.set('src', calendarId);
+              return urlObj.toString();
+            }
+            return url;
+          });
+          eventUrls.push(...urlsWithCalendar);
         }
       } catch (error) {
         // Continue processing other events even if one fails
@@ -1003,23 +1013,13 @@ async function handleCreateEvent(eventText) {
       throw new Error('Could not generate any events from the provided text');
     }
 
-    // Add calendar ID parameter if specified
-    const finalUrls = eventUrls.map(url => {
-      if (calendarId) {
-        const urlObj = new URL(url);
-        urlObj.searchParams.set('src', calendarId);
-        return urlObj.toString();
-      }
-      return url;
-    });
-    
     // Navigate to the first event URL (primary behavior)
-    window.location.href = finalUrls[0];
+    window.location.href = eventUrls[0];
     
     // If there are multiple events, open additional tabs (optional enhancement)
-    if (finalUrls.length > 1) {
-      for (let i = 1; i < finalUrls.length; i++) {
-        window.open(finalUrls[i], '_blank');
+    if (eventUrls.length > 1) {
+      for (let i = 1; i < eventUrls.length; i++) {
+        window.open(eventUrls[i], '_blank');
       }
     }
     
@@ -1061,8 +1061,7 @@ async function processCalendarSubstitutions(eventText, savedCalendars) {
     return { processedText: eventText, calendarId: null };
   }
   
-  // For now, use the first calendar ID found
-  // In the future, could support multiple calendars for multiple events
+  // Use the first calendar ID found in this specific event
   const firstMatch = matches[0];
   const nickname = '@' + firstMatch[1];
   
@@ -1073,8 +1072,8 @@ async function processCalendarSubstitutions(eventText, savedCalendars) {
     throw new Error(`Calendar nickname "${nickname}" not found. Please add it in Settings.`);
   }
   
-  // Remove the @nickname from the text (it's not part of the event description)
-  const processedText = eventText.replace(calendarPattern, '').trim();
+  // Remove only the @nickname from this specific event text
+  const processedText = eventText.replace(new RegExp(`@${firstMatch[1]}\\b`, 'g'), '').trim();
   
   return { processedText, calendarId };
 }

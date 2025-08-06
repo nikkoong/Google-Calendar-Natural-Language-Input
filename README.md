@@ -13,10 +13,12 @@ Quick Add was a Google Calendar feature that enabled creating calendar events fr
 4. Check with Amazon about returned item refund d(ID was 43300061-901 i think)
 5. Date night next Friday; walk dog in 30min 
 6. Check engine oil Thursday at 5pm every 6 months; check tires today every 410 days
+7. Meeting with team @work 2pm; Personal dentist appointment 4pm (calendar targeting per event)
 
 ### Updates August 2025
 * Added support for saved calendars. You can now save your favorite calendars and quickly add events to them.
 * Added Quick Add button to the Google Calendar UI. This button opens a text input for natural language event creation.
+* **Improved calendar targeting**: @nickname now applies only to the specific event it's mentioned in when using semicolons to separate multiple events. Example: "Meeting @work 2pm; Personal lunch 1pm" will only add the meeting to your work calendar.
 
 ### Updates 11/4/2024
 * Handle multiple events. Just use the `;` to separate the different events you want to enter.
