@@ -155,6 +155,84 @@
             background: #b52d20;
         }
 
+        /* Settings sections */
+        .settings-section {
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .settings-section:last-child {
+            border-bottom: none;
+        }
+
+        .settings-section-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #3c4043;
+            margin: 0 0 12px 0;
+        }
+
+        .settings-option {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Toggle switch */
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .toggle-input {
+            appearance: none;
+            width: 44px;
+            height: 24px;
+            border-radius: 12px;
+            background: #dadce0;
+            position: relative;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .toggle-input:checked {
+            background: #4285f4;
+        }
+
+        .toggle-input::before {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: white;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.3s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .toggle-input:checked::before {
+            transform: translateX(20px);
+        }
+
+        .toggle-label {
+            font-size: 14px;
+            color: #3c4043;
+            font-weight: 400;
+        }
+
+        .settings-description {
+            font-size: 12px;
+            color: #5f6368;
+            line-height: 1.4;
+            margin: 0;
+            margin-left: 56px;
+        }
+
         /* Reuse the same styles from content.css */
         .quick-event-header {
             display: flex;
@@ -407,8 +485,8 @@
             autofocus
         ></textarea>
         
-        <div class="quick-event-help">
-            d(description) - l(location) - multiple events (;) - recurrences "every N days/weeks/etc" - use settings to manage saved calendars
+        <div class="quick-event-help" id="quick-event-help-text">
+            <!-- Will be populated by JavaScript -->
         </div>
 
         <div class="error-message" id="error-message"></div>

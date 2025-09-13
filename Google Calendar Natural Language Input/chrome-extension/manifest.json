@@ -1,7 +1,7 @@
 {
   "name": "Google Calendar Natural Language Input",
-  "description": "Use natural language to create Google Calendar events. Updated 'Rip Quick Add' with quality of life features.",
-  "version": "2.2",
+  "description": "Use natural language to create Google Calendar events with zero clicks from anywhere in your browser.",
+  "version": "2.3",
   "manifest_version": 3,
   "permissions": [
     "storage",
@@ -26,24 +26,39 @@
   },
   "action": {
     "default_icon": {
-    "16": "images/icon_16.png",
-    "32": "images/icon_32.png"
+      "16": "images/icon_16.png",
+      "32": "images/icon_32.png"
     },
     "default_title": "Add GCal Event",
     "default_popup": "popup.html"
   },
   "content_scripts": [
     {
-      "matches": ["https://calendar.google.com/*"],
-      "js": ["content-helpers.js", "content.js"],
-      "css": ["content.css"],
+      "matches": [
+        "https://calendar.google.com/*"
+      ],
+      "js": [
+        "shared-utils.js",
+        "help-content.js",
+        "content-helpers.js",
+        "content.js"
+      ],
+      "css": [
+        "content.css"
+      ],
       "run_at": "document_end"
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["*.js", "*.css", "*.html"],
-      "matches": ["https://calendar.google.com/*"]
+      "resources": [
+        "*.js",
+        "*.css",
+        "*.html"
+      ],
+      "matches": [
+        "https://calendar.google.com/*"
+      ]
     }
   ]
 }

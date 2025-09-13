@@ -1,4 +1,5 @@
 import {createEventUrls} from './helpers.js'
+import {ChromeStorage} from './shared-utils.js'
 
 // UI Elements
 const input = document.getElementById('quick-event-input');
@@ -280,6 +281,9 @@ async function showSettings() {
   
   // Load and display saved calendars
   await loadSavedCalendars();
+  
+  // Load and display Quick Add button preference
+  await loadQuickAddButtonPreference();
 }
 
 // Create settings container
@@ -289,11 +293,27 @@ function createSettingsContainer() {
   
   container.innerHTML = `
     <div class="settings-header">
-      <h3 class="settings-title">Calendar Settings</h3>
+      <h3 class="settings-title">Settings</h3>
       <button class="settings-back-btn" id="settings-back">← Back</button>
     </div>
     
-    <div class="calendar-table-container">
+    <div class="settings-section">
+      <h4 class="settings-section-title">Quick Add Button</h4>
+      <div class="settings-option">
+        <label class="toggle-container">
+          <input type="checkbox" id="quick-add-toggle" class="toggle-input">
+          <span class="toggle-slider"></span>
+          <span class="toggle-label">Show Quick Add button on Google Calendar</span>
+        </label>
+        <p class="settings-description">
+          When enabled, shows a "Quick Add" button next to Google Calendar's Create button for faster event creation.
+        </p>
+      </div>
+    </div>
+    
+    <div class="settings-section">
+      <h4 class="settings-section-title">Calendar Nicknames</h4>
+      <div class="calendar-table-container">
       <table class="calendar-table">
         <thead>
           <tr>
@@ -331,10 +351,37 @@ function setupSettingsListeners(container) {
   const saveBtn = container.querySelector('#save-calendar');
   const nicknameInput = container.querySelector('#new-nickname');
   const calendarIdInput = container.querySelector('#new-calendar-id');
+  const quickAddToggle = container.querySelector('#quick-add-toggle');
   
   // Back button
   backBtn.addEventListener('click', () => {
     hideSettings();
+  });
+  
+  // Quick Add button toggle
+  quickAddToggle.addEventListener('change', async (e) => {
+    try {
+      await ChromeStorage.setQuickAddButtonVisible(e.target.checked);
+      
+      // Send message to content script to update button visibility
+      try {
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (tab && tab.url.includes('calendar.google.com')) {
+          await chrome.tabs.sendMessage(tab.id, {
+            action: 'toggleQuickAddButton',
+            visible: e.target.checked
+          });
+        }
+      } catch (tabError) {
+        console.log('Could not send message to content script:', tabError.message);
+        // Not a critical error - the toggle will still work on next page load
+      }
+    } catch (error) {
+      console.error('Error saving Quick Add button preference:', error);
+      // Revert the toggle if save failed
+      e.target.checked = !e.target.checked;
+      alert('Error saving preference: ' + error.message);
+    }
   });
   
   // Save button
@@ -541,6 +588,24 @@ async function removeCalendar(nickname) {
     }
     
     alert(errorMessage);
+  }
+}
+
+// Load Quick Add button preference and update toggle
+async function loadQuickAddButtonPreference() {
+  try {
+    const isVisible = await ChromeStorage.getQuickAddButtonVisible();
+    const toggle = document.querySelector('#quick-add-toggle');
+    if (toggle) {
+      toggle.checked = isVisible;
+    }
+  } catch (error) {
+    console.error('Error loading Quick Add button preference:', error);
+    // Default to false (unchecked) if loading fails
+    const toggle = document.querySelector('#quick-add-toggle');
+    if (toggle) {
+      toggle.checked = false;
+    }
   }
 }
 
