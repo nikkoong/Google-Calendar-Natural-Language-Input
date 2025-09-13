@@ -15,6 +15,10 @@ Quick Add was a Google Calendar feature that enabled creating calendar events fr
 6. Check engine oil Thursday at 5pm every 6 months; check tires today every 410 days
 7. Meeting with team @work 2pm; Personal dentist appointment 4pm (calendar targeting per event)
 
+### Updates September 2025
+* **Quick Add Button Toggle**: Added user control over the Quick Add button visibility. The button is now hidden by default and can be toggled on/off through the extension popup settings menu.
+* **Improved User Experience**: Users can now choose whether to show the Quick Add button next to Google Calendar's Create button, giving them full control over their interface.
+
 ### Updates August 2025
 * Added support for saved calendars. You can now save your favorite calendars and quickly add events to them.
 * Added Quick Add button to the Google Calendar UI. This button opens a text input for natural language event creation.
@@ -39,34 +43,42 @@ Quick Add was a Google Calendar feature that enabled creating calendar events fr
 * Widened scope of allowed dates to default dates without a start date to today, starting now, for 1 hour
 * Defaulted all events to 1 hour, instead of `allDay`
 
-### Next up
-* Better location and detail parsing - `l()` and `d()` are not very elegant.
-
 ## How it works
 
 1. Takes a text input e.g. "Dinner friday 7pm"
 2. Parses the input to find date info
 3. Returns a Google Calendar URL for adding the event to your calendar.
 
-Alternatively, events can be created by pressing `CMD + E` and entering the event info in the text box. Or, select a date and time and right click to create event.
+The extension can be used in multiple ways:
+- **Popup Interface**: Click the extension icon or press `CMD/Ctrl + E` to open the popup and enter event details
+- **Quick Add Button**: Enable the Quick Add button in settings to add a button next to Google Calendar's Create button for quick access
+- **Calendar Settings**: Set up calendar nicknames (like @work, @personal) for easy event targeting
+
+### Extension Settings
+The extension popup includes a settings menu where you can:
+- **Toggle Quick Add Button**: Show or hide the Quick Add button on Google Calendar (hidden by default)
+- **Manage Calendar Nicknames**: Set up shortcuts like @work or @personal to quickly target specific calendars
 
 Changes that were made to Max's original Chrome Extension:
-1. `CMD + E` to trigger text entry popup (for natural language calendar event entry)
+1. `CMD/Ctrl + E` to trigger text entry popup (for natural language calendar event entry)
 2. The textbox is autofocused when the popup is opened
 3. Press `Enter` to create a calendar event
 4. Prettied up the error messages
 5. Removed multiple language support and languages settings (to save space)
+6. Added Quick Add button toggle in settings menu for user control
+7. Added calendar nickname management for easy event targeting
 
 ## Link to Chrome Web Store App
 [Chrome Extension Link](https://chromewebstore.google.com/detail/google-calendar-natural-l/dpefadnnccbgjhgnnjilfgefcoallmji)
 
-#### Local
-If you want to develop locally: the extension should end up in the folder `chrome-extension`, which is the output of the `yarn build` command. This rolls up (using rollup.js) the libraries we need into a single folder, with all of it getting bundled into `background.js` and `popup.js`. 
+#### Local Development
+If you want to develop locally: the extension should end up in the folder `chrome-extension`, which is the output of the `npm run build` command. This rolls up (using rollup.js) the libraries we need into a single folder, with all of it getting bundled into `background.js` and `popup.js`. 
 
 A good place to start is the `manifest.json` file, which is the master file for all Google Chrome extensions. 
 
 When you're done making changes, simply zip all the files/folders in the `chrome-extension` folder into a single zip file, and that can be uploaded to the Chrome Web Store.
 
 This app uses rollup transpiling to use the JavaScript modules pattern.
-* `yarn build`: transpile all scripts into `chrome-extension` directory
-* `yarn watch`: transpile all scripts into `chrome-extension` directory and re-transpile automatically on changes
+* `npm run build`: transpile all scripts into `chrome-extension` directory
+* `npm run watch`: transpile all scripts into `chrome-extension` directory and re-transpile automatically on changes
+* `npm test`: run the test suite to verify functionality
