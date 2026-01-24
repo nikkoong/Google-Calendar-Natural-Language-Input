@@ -1,6 +1,6 @@
 {
   "name": "gcal-natural-lang-input",
-  "version": "2.4",
+  "version": "2.4.1",
   "description": "Quickly create Google Calendar events from natural language.",
   "main": "index.js",
   "scripts": {

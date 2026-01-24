@@ -38,7 +38,8 @@ export const HELP_SECTIONS = [
     items: [
       'Set up calendar nicknames in Settings (⚙️ button)',
       'Use @nickname to target specific calendars',
-      'Examples: @work, @personal, @gym'
+      'Examples: @work, @personal, @gym',
+      'Use Settings for my calendars > Integrate calendar > Calendar ID to get email address for calendar'
     ]
   },
   {

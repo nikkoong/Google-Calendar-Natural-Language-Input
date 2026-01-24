@@ -2760,10 +2760,6 @@
 	}
 
 	function parse(text, lang = EN) {
-	  console.log('=== PARSE START ===');
-	  console.log('Original input:', JSON.stringify(text));
-	  console.log('Language:', lang);
-	  
 	  if (!text) {
 	    throw new Error('invalid input text');
 	  }
@@ -2772,31 +2768,10 @@
 	  // Convert various numeric date range formats to "X to Y" for better parsing
 	  // Handles: M/D-M/D, M/DD-M/DD, MM/D-MM/D, MM/DD-MM/DD, and with years
 	  // Also handles spaces around the hyphen
-	  const originalText = text;
 	  text = text.replace(/(\d{1,2}\/\d{1,2}(?:\/\d{2,4})?)\s*-\s*(\d{1,2}\/\d{1,2}(?:\/\d{2,4})?)/g, '$1 to $2');
-	  
-	  if (originalText !== text) {
-	    console.log('Date preprocessing applied:');
-	    console.log('  Before:', JSON.stringify(originalText));
-	    console.log('  After:', JSON.stringify(text));
-	  } else {
-	    console.log('No date preprocessing needed');
-	  }
 
 	  const locale = locales[lang] || en;
-	  console.log('Using locale:', locale === en ? 'en' : 'other');
-	  console.log('Text going to chrono-node:', JSON.stringify(text));
-	  
 	  const results = locale.parse(text);
-	  console.log('Chrono-node results:', results.length, 'result(s)');
-	  if (results.length > 0) {
-	    console.log('First result:', {
-	      text: results[0].text,
-	      start: results[0].start?.date(),
-	      end: results[0].end?.date(),
-	      refDate: results[0].refDate
-	    });
-	  }
 
 	  if (results.length === 0) {
 	    throw new Error('could not find time data');
@@ -2817,93 +2792,61 @@
 	  }
 
 	  const recurrenceInfo = parseRecurrence(text);
-	  console.log('Recurrence parsing result:', recurrenceInfo);
 	  if (recurrenceInfo) {
 	    text = text.replace(recurrenceInfo.recurrenceText, "").trim();
-	    console.log('Text after recurrence removal:', JSON.stringify(text));
 	  }
 
 	  const detailInfo = parseDetails(text);
-	  console.log('Details parsing result:', detailInfo);
 	  if (detailInfo) {
 	    text = text.replace(detailInfo.detailText,"").trim();
-	    console.log('Text after details removal:', JSON.stringify(text));
 	  }
 
 	  const locationInfo = parseLocation(text);
-	  console.log('Location parsing result:', locationInfo);
 	  if (locationInfo) {
 	    text = text.replace(locationInfo.locationText,"").trim();
-	    console.log('Text after location removal:', JSON.stringify(text));
 	  }
 
 	  const eventTitle = text.replace(result.text, "").trim();
-	  console.log('Event title after text processing:', JSON.stringify(eventTitle));
 
 	  if (!start.isValid()) {
 	    start = dayjs_min();
-	    console.log('Start date was invalid, using current time');
 	  }
-	  console.log('Final start date:', start.format());
 
 	  if (result.end !== null) {
 	    end = dayjs_min(result.end.date());
-	    console.log('End date from chrono:', end.format());
 	  }
 
 	  if (end === null) {
 	    end = start.add(1, 'hours');
-	    console.log('No end date found, adding 1 hour:', end.format());
 	  }
 
 	  const dates = dateRange(start, end, isAllDay);
-	  console.log('Final date range:', dates);
 	  
-	  const finalResult = {
+	  return {
 	    text: eventTitle,
 	    dates,
 	    recur: recurrenceInfo? recurrenceInfo.rrule : null,
 	    details:detailInfo? detailInfo.details : "",
 	    location:locationInfo? locationInfo.location : ""
 	  };
-	  
-	  console.log('=== PARSE RESULT ===');
-	  console.log('Final result:', finalResult);
-	  console.log('=== PARSE END ===');
-	  
-	  return finalResult;
 	}
 
 	function createEventUrls(text, lang) {
-	  console.log('=== CREATE EVENT URLS START ===');
-	  console.log('Input text:', JSON.stringify(text));
-	  console.log('Language:', lang);
-	  
 	  const events = text.split(';').map(eventText => eventText.trim()).filter(Boolean);
-	  console.log('Split into', events.length, 'events:', events);
 	  
-	  const urls = events.map((eventText, index) => {
-	    console.log(`\n--- Processing event ${index + 1}: ${JSON.stringify(eventText)} ---`);
+	  const urls = events.map((eventText) => {
 	    try {
 	      const data = parse(eventText, lang);
 	      data.action = 'TEMPLATE';
 	      const baseUrl = 'https://www.google.com/calendar/event';
 	      const params = new URLSearchParams(data);
-	      const url = `${baseUrl}?${params}`;
-	      console.log(`Event ${index + 1} URL:`, url);
-	      return url;
+	      return `${baseUrl}?${params}`;
 	    } catch (err) {
-	      console.log(`Error parsing event ${index + 1}: ${err.message}`);
 	      return null;
 	    }
 	  });
 	  
-	  const filteredUrls = urls.filter(Boolean);
-	  console.log('=== CREATE EVENT URLS RESULT ===');
-	  console.log('Successfully created', filteredUrls.length, 'URLs out of', events.length, 'events');
-	  console.log('=== CREATE EVENT URLS END ===');
-	  
-	  return filteredUrls;
+	  return urls.filter(Boolean);
 	}
 
 	// Shared utilities for both popup and content script
@@ -3238,6 +3181,7 @@
           <li>Set up calendar nicknames in Settings (⚙️ button)</li>
           <li>Use @nickname to target specific calendars</li>
           <li>Examples: @work, @personal, @gym</li>
+          <li>Use Settings for my calendars > Integrate calendar > Calendar ID to get email address for calendar</li>
         </ul>
       </div>
 
@@ -3451,10 +3395,10 @@
 	  Object.entries(calendars).forEach(([nickname, calendarId]) => {
 	    const row = document.createElement('tr');
 	    row.innerHTML = `
-      <td class="nickname-cell">${sanitizeInput(nickname)}</td>
-      <td class="calendar-id-cell" title="${sanitizeInput(calendarId)}">${truncateCalendarId(sanitizeInput(calendarId))}</td>
+      <td class="nickname-cell">${sanitizeInputForHTML(nickname)}</td>
+      <td class="calendar-id-cell" title="${sanitizeInputForHTML(calendarId)}">${truncateCalendarId(sanitizeInputForHTML(calendarId))}</td>
       <td>
-        <button class="remove-btn" data-nickname="${sanitizeInput(nickname)}">Remove</button>
+        <button class="remove-btn" data-nickname="${sanitizeInputForHTML(nickname)}">Remove</button>
       </td>
     `;
 	    
@@ -3476,8 +3420,8 @@
 	  return calendarId.substring(0, 30) + '...';
 	}
 
-	// Sanitize user input to prevent XSS
-	function sanitizeInput(input) {
+	// Sanitize user input to prevent XSS (for HTML display only)
+	function sanitizeInputForHTML(input) {
 	  if (typeof input !== 'string') return '';
 	  
 	  return input
@@ -3486,6 +3430,16 @@
 	    .replace(/"/g, '&quot;')
 	    .replace(/'/g, '&#x27;')
 	    .replace(/\//g, '&#x2F;')
+	    .trim();
+	}
+
+	// Light sanitization for event text (preserves slashes for date parsing)
+	function sanitizeInput(input) {
+	  if (typeof input !== 'string') return '';
+	  
+	  return input
+	    .replace(/</g, '&lt;')
+	    .replace(/>/g, '&gt;')
 	    .trim();
 	}
 

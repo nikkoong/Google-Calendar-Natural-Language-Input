@@ -1,7 +1,7 @@
 {
   "name": "Google Calendar Natural Language Input",
   "description": "Use natural language to create Google Calendar events with zero clicks from anywhere in your browser.",
-  "version": "2.3.1",
+  "version": "2.4.1",
   "manifest_version": 3,
   "permissions": [
     "storage",

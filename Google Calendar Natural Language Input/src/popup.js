@@ -233,6 +233,7 @@ function createHelpContainer() {
           <li>Set up calendar nicknames in Settings (⚙️ button)</li>
           <li>Use @nickname to target specific calendars</li>
           <li>Examples: @work, @personal, @gym</li>
+          <li>Use Settings for my calendars > Integrate calendar > Calendar ID to get email address for calendar</li>
         </ul>
       </div>
 
@@ -446,10 +447,10 @@ function displayCalendars(calendars) {
   Object.entries(calendars).forEach(([nickname, calendarId]) => {
     const row = document.createElement('tr');
     row.innerHTML = `
-      <td class="nickname-cell">${sanitizeInput(nickname)}</td>
-      <td class="calendar-id-cell" title="${sanitizeInput(calendarId)}">${truncateCalendarId(sanitizeInput(calendarId))}</td>
+      <td class="nickname-cell">${sanitizeInputForHTML(nickname)}</td>
+      <td class="calendar-id-cell" title="${sanitizeInputForHTML(calendarId)}">${truncateCalendarId(sanitizeInputForHTML(calendarId))}</td>
       <td>
-        <button class="remove-btn" data-nickname="${sanitizeInput(nickname)}">Remove</button>
+        <button class="remove-btn" data-nickname="${sanitizeInputForHTML(nickname)}">Remove</button>
       </td>
     `;
     
@@ -471,8 +472,8 @@ function truncateCalendarId(calendarId) {
   return calendarId.substring(0, 30) + '...';
 }
 
-// Sanitize user input to prevent XSS
-function sanitizeInput(input) {
+// Sanitize user input to prevent XSS (for HTML display only)
+function sanitizeInputForHTML(input) {
   if (typeof input !== 'string') return '';
   
   return input
@@ -481,6 +482,16 @@ function sanitizeInput(input) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#x27;')
     .replace(/\//g, '&#x2F;')
+    .trim();
+}
+
+// Light sanitization for event text (preserves slashes for date parsing)
+function sanitizeInput(input) {
+  if (typeof input !== 'string') return '';
+  
+  return input
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
     .trim();
 }
 

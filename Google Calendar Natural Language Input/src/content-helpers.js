@@ -77,10 +77,6 @@ function parseLocation(text) {
 }
 
 function parse(text, lang = EN) {
-  console.log('=== PARSE START ===');
-  console.log('Original input:', JSON.stringify(text));
-  console.log('Language:', lang);
-  
   if (!text) {
     throw new Error('invalid input text');
   }
@@ -89,31 +85,10 @@ function parse(text, lang = EN) {
   // Convert various numeric date range formats to "X to Y" for better parsing
   // Handles: M/D-M/D, M/DD-M/DD, MM/D-MM/D, MM/DD-MM/DD, and with years
   // Also handles spaces around the hyphen
-  const originalText = text;
   text = text.replace(/(\d{1,2}\/\d{1,2}(?:\/\d{2,4})?)\s*-\s*(\d{1,2}\/\d{1,2}(?:\/\d{2,4})?)/g, '$1 to $2');
-  
-  if (originalText !== text) {
-    console.log('Date preprocessing applied:');
-    console.log('  Before:', JSON.stringify(originalText));
-    console.log('  After:', JSON.stringify(text));
-  } else {
-    console.log('No date preprocessing needed');
-  }
 
   const locale = locales[lang] || en
-  console.log('Using locale:', locale === en ? 'en' : 'other');
-  console.log('Text going to chrono-node:', JSON.stringify(text));
-  
   const results = locale.parse(text)
-  console.log('Chrono-node results:', results.length, 'result(s)');
-  if (results.length > 0) {
-    console.log('First result:', {
-      text: results[0].text,
-      start: results[0].start?.date(),
-      end: results[0].end?.date(),
-      refDate: results[0].refDate
-    });
-  }
 
   if (results.length === 0) {
     throw new Error('could not find time data');
@@ -134,31 +109,21 @@ function parse(text, lang = EN) {
   }
 
   const recurrenceInfo = parseRecurrence(text);
-  console.log('Recurrence parsing:', recurrenceInfo || 'none');
   if (recurrenceInfo) {
     text = text.replace(recurrenceInfo.recurrenceText, "").trim();
-    console.log('Text after removing recurrence:', JSON.stringify(text));
   }
 
   const detailInfo = parseDetails(text);
-  console.log('Details parsing:', detailInfo || 'none');
   if (detailInfo) {
     text = text.replace(detailInfo.detailText,"").trim();
-    console.log('Text after removing details:', JSON.stringify(text));
   }
 
   const locationInfo = parseLocation(text);
-  console.log('Location parsing:', locationInfo || 'none');
   if (locationInfo) {
     text = text.replace(locationInfo.locationText,"").trim();
-    console.log('Text after removing location:', JSON.stringify(text));
   }
 
   const eventTitle = text.replace(result.text, "").trim();
-  console.log('Event title extraction:');
-  console.log('  Text before title extraction:', JSON.stringify(text));
-  console.log('  Chrono result.text:', JSON.stringify(result.text));
-  console.log('  Final event title:', JSON.stringify(eventTitle));
 
   if (!start.isValid()) {
     start = dayjs();
@@ -172,58 +137,33 @@ function parse(text, lang = EN) {
     end = start.add(1, 'hours');
   }
 
-  console.log('Date calculations:');
-  console.log('  Start date:', start.format('YYYY-MM-DD HH:mm:ss'));
-  console.log('  End date:', end.format('YYYY-MM-DD HH:mm:ss'));
-  console.log('  Is all day:', isAllDay);
-
   const dates = dateRange(start, end, isAllDay);
-  console.log('Generated date range:', dates);
   
-  const finalResult = {
+  return {
     text: eventTitle,
     dates,
     recur: recurrenceInfo? recurrenceInfo.rrule : null,
     details:detailInfo? detailInfo.details : "",
     location:locationInfo? locationInfo.location : ""
   };
-  
-  console.log('=== PARSE RESULT ===');
-  console.log('Final result:', JSON.stringify(finalResult, null, 2));
-  console.log('=== PARSE END ===');
-  
-  return finalResult;
 }
 
 function createEventUrls(text, lang) {
-  console.log('🔗 CREATE EVENT URLS START');
-  console.log('Input text:', JSON.stringify(text));
-  console.log('Language:', lang);
-  
   const events = text.split(';').map(eventText => eventText.trim()).filter(Boolean);
-  console.log('Split into', events.length, 'event(s):', events);
   
-  const urls = events.map((eventText, index) => {
-    console.log(`\n--- Processing event ${index + 1}: ${JSON.stringify(eventText)} ---`);
+  const urls = events.map((eventText) => {
     try {
       const data = parse(eventText, lang);
       data.action = 'TEMPLATE';
       const baseUrl = 'https://www.google.com/calendar/event';
       const params = new URLSearchParams(data);
-      const finalUrl = `${baseUrl}?${params}`;
-      console.log(`✅ Event ${index + 1} URL generated:`, finalUrl);
-      return finalUrl;
+      return `${baseUrl}?${params}`;
     } catch (err) {
-      console.log(`❌ Event ${index + 1} failed:`, err.message);
-      console.log(`Error parsing event: ${err.message}`);
       return null;
     }
   });
   
-  const validUrls = urls.filter(Boolean);
-  console.log(`\n🔗 CREATE EVENT URLS END - Generated ${validUrls.length}/${events.length} URLs`);
-  
-  return validUrls;
+  return urls.filter(Boolean);
 }
 
 // Export functions for use in content script
@@ -232,5 +172,3 @@ window.GoogleCalendarNLP = {
   createEventUrls,
   parseRecurrence
 };
-
-console.log('Google Calendar NLP helpers loaded');

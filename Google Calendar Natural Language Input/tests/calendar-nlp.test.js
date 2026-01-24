@@ -185,6 +185,102 @@ runner.test('Single dates not affected by fix', () => {
   runner.expect(extractEventText(urls[0])).toBe('meeting');
 });
 
+// =============================================================================
+// SINGLE NUMERIC DATE TESTS (M/D FORMAT)
+// =============================================================================
+
+runner.test('Single numeric date - basic M/D format (2/2)', () => {
+  const urls = createEventUrls('meeting 2/2');
+  runner.expect(urls).toHaveLength(1);
+  
+  const eventText = extractEventText(urls[0]);
+  const dateRange = extractDateRange(urls[0]);
+  
+  runner.expect(eventText).toBe('meeting');
+  runner.expect(dateRange).toContain('0202'); // February 2nd
+});
+
+runner.test('Single numeric date - M/DD format (7/13)', () => {
+  const urls = createEventUrls('dinner 7/13');
+  runner.expect(urls).toHaveLength(1);
+  
+  const eventText = extractEventText(urls[0]);
+  const dateRange = extractDateRange(urls[0]);
+  
+  runner.expect(eventText).toBe('dinner');
+  runner.expect(dateRange).toContain('0713'); // July 13th
+});
+
+runner.test('Single numeric date - MM/DD format (12/25)', () => {
+  const urls = createEventUrls('holiday 12/25');
+  runner.expect(urls).toHaveLength(1);
+  
+  const eventText = extractEventText(urls[0]);
+  const dateRange = extractDateRange(urls[0]);
+  
+  runner.expect(eventText).toBe('holiday');
+  runner.expect(dateRange).toContain('1225'); // December 25th
+});
+
+runner.test('Single numeric date with time (2/14 7pm)', () => {
+  const urls = createEventUrls('dinner 2/14 7pm');
+  runner.expect(urls).toHaveLength(1);
+  
+  const eventText = extractEventText(urls[0]);
+  const dateRange = extractDateRange(urls[0]);
+  
+  runner.expect(eventText).toBe('dinner');
+  runner.expect(dateRange).toContain('0214'); // February 14th
+  runner.expect(dateRange).toContain('T19'); // 7pm = 19:00
+});
+
+runner.test('Single numeric date with description (3/17)', () => {
+  const urls = createEventUrls('party 3/17 d(St Patricks Day)');
+  runner.expect(urls).toHaveLength(1);
+  
+  const eventText = extractEventText(urls[0]);
+  const dateRange = extractDateRange(urls[0]);
+  
+  runner.expect(eventText).toBe('party');
+  runner.expect(dateRange).toContain('0317'); // March 17th
+  runner.expect(urls[0]).toContain('details=St+Patricks+Day');
+});
+
+runner.test('Single numeric date with location (5/5)', () => {
+  const urls = createEventUrls('lunch 5/5 l(Mexican Restaurant)');
+  runner.expect(urls).toHaveLength(1);
+  
+  const eventText = extractEventText(urls[0]);
+  const dateRange = extractDateRange(urls[0]);
+  
+  runner.expect(eventText).toBe('lunch');
+  runner.expect(dateRange).toContain('0505'); // May 5th
+  runner.expect(urls[0]).toContain('location=Mexican+Restaurant');
+});
+
+runner.test('Single numeric date with recurrence (1/1 every year)', () => {
+  const urls = createEventUrls('new year celebration 1/1 every year');
+  runner.expect(urls).toHaveLength(1);
+  
+  const eventText = extractEventText(urls[0]);
+  const dateRange = extractDateRange(urls[0]);
+  
+  runner.expect(eventText).toBe('new year celebration');
+  runner.expect(dateRange).toContain('0101'); // January 1st
+  runner.expect(urls[0]).toContain('recur=RRULE%3AFREQ%3DYEARLY');
+});
+
+runner.test('Multiple events with single numeric dates', () => {
+  const urls = createEventUrls('meeting 2/2 3pm; lunch 2/14');
+  runner.expect(urls).toHaveLength(2);
+  
+  runner.expect(extractEventText(urls[0])).toBe('meeting');
+  runner.expect(extractDateRange(urls[0])).toContain('0202');
+  
+  runner.expect(extractEventText(urls[1])).toBe('lunch');
+  runner.expect(extractDateRange(urls[1])).toContain('0214');
+});
+
 runner.test('Time ranges not affected by fix', () => {
   const urls = createEventUrls('lunch 1pm-2pm');
   runner.expect(urls).toHaveLength(1);

@@ -494,7 +494,7 @@ function showHelp() {
       </div>
       
       <div class="quick-event-help-body">
-        ${typeof generateHelpHTML !== 'undefined' ? generateHelpHTML() : `
+        ${typeof HelpContent !== 'undefined' && HelpContent.generateHelpHTML ? HelpContent.generateHelpHTML() : `
         <div class="quick-event-help-section">
           <h4>Basic Examples:</h4>
           <ul>
@@ -538,6 +538,7 @@ function showHelp() {
             <li>Set up calendar nicknames in Settings (⚙️ button)</li>
             <li>Use @nickname to target specific calendars</li>
             <li>Examples: @work, @personal, @gym</li>
+            <li>Use Settings for my calendars > Integrate calendar > Calendar ID to get email address for calendar</li>
           </ul>
         </div>
 
@@ -884,8 +885,6 @@ async function handleCreateEvent(eventText) {
   // Validate input exists
   if (!eventText || typeof eventText !== 'string') return;
   
-  console.log('🔍 Event text:', JSON.stringify(eventText));
-  
   const container = document.querySelector('.quick-event-input-container');
   const loading = container?.querySelector('.quick-event-loading');
   const actions = container?.querySelector('.quick-event-actions');
@@ -896,11 +895,8 @@ async function handleCreateEvent(eventText) {
   
   try {
     if (!window.GoogleCalendarNLP) {
-      console.error('GoogleCalendarNLP not available');
       throw new Error('Natural language processing not available');
     }
-    
-    console.log('GoogleCalendarNLP available:', Object.keys(window.GoogleCalendarNLP));
 
     // Get saved calendars from storage
     const storage = await chrome.storage.sync.get('savedCalendars');
@@ -920,13 +916,6 @@ async function handleCreateEvent(eventText) {
       try {
         // Process calendar ID substitutions for this specific event
         const { processedText, calendarId } = await processCalendarSubstitutions(singleEventText, savedCalendars);
-        
-        // Debug logging to see what's being processed
-        console.log('Quick Add Debug:', {
-          original: singleEventText,
-          processed: processedText,
-          calendarId: calendarId
-        });
         
         // Generate URLs for this specific event
         const urls = window.GoogleCalendarNLP.createEventUrls(processedText);
